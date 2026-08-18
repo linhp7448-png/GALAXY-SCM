@@ -2092,6 +2092,151 @@
       border-radius: 6px;
       font-size: 14px;
     }
+    /* ============================================================
+       MOBILE RESPONSIVENESS
+       ============================================================ */
+    @media (max-width: 768px) {
+      /* TOP BAR */
+      .top-bar {
+        padding: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        gap: 10px;
+      }
+      .logo { font-size: 18px; }
+      .search-box { width: 100%; }
+      .search-box input { width: 100%; font-size: 14px; }
+      .top-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .top-actions .btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      #topUserEmail { display: none; }
+
+      /* TABS */
+      .tabs {
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .tab-btn {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+        padding: 8px;
+      }
+
+      /* ACTION BARS */
+      .action-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        gap: 10px;
+        padding: 10px;
+      }
+      .action-bar .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .catalog-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      /* DATA TABLE to CARDS */
+      .data-table, .data-table tbody, .data-table tr, .data-table td {
+        display: block;
+        width: 100%;
+      }
+      .data-table thead {
+        display: none;
+      }
+      .data-table tr {
+        background: var(--surface);
+        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 10px;
+      }
+      .data-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dotted rgba(255, 255, 255, 0.1);
+        padding: 8px 0;
+        text-align: right;
+        min-height: 40px;
+      }
+      .data-table td:last-child {
+        border-bottom: none;
+      }
+      .data-table td.col-actions {
+        justify-content: flex-end;
+        background: rgba(0,0,0,0.2);
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+      .data-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--brand);
+        text-transform: uppercase;
+        font-size: 11px;
+        margin-right: 15px;
+        text-align: left;
+        flex-shrink: 0;
+      }
+      .data-table td input, .data-table td select {
+        width: 60%;
+        text-align: right;
+      }
+      .cell-ro {
+        width: 100%;
+        text-align: right;
+      }
+
+      /* ITEM GRID CARDS */
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* DRAWER */
+      .drawer {
+        width: 100%;
+        border-left: none;
+        top: 0;
+        border-radius: 0;
+        transform: translateY(100%);
+      }
+      .drawer.open {
+        transform: translateY(0);
+      }
+      .drawer-body {
+        padding: 15px;
+      }
+      .drawer-form-group label {
+        font-size: 14px;
+      }
+      .drawer-form-group input, .drawer-form-group select {
+        padding: 12px;
+        font-size: 16px;
+      }
+
+      /* MODALS */
+      .modal-content, .guide-modal {
+        width: 95%;
+        margin: 10% auto;
+        padding: 20px;
+      }
+      .guide-modal { max-height: 80vh; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -3468,7 +3613,7 @@
             const disp = (val === null || val === undefined || val === '') ? '—' : val;
             inner = `<div class="cell-ro">${disp}</div>`;
           }
-          return `<td class="data-cell" data-vr="${vr}" data-col="${ci}">${inner}</td>`;
+          return `<td class="data-cell" data-vr="${vr}" data-col="${ci}" data-label="${f.label}">${inner}</td>`;
         }).join('');
         const actionsCell = editing
           ? `<td class="col-actions"><input type="checkbox" class="row-chk" data-row-chk="${r.rid}" ${state.dataSelectedRids.has(r.rid) ? 'checked' : ''}><button class="row-del-btn" data-del-row="${r.rid}" title="Xoá dòng"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2m-1 0v14a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V6h6z"/></svg></button></td>`
