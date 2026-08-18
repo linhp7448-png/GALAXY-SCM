@@ -2162,16 +2162,17 @@
         flex-direction: column;
         background: var(--surface);
         margin-bottom: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.1);
         border-radius: 8px;
         padding: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       }
       .data-table td {
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         align-items: flex-start;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         padding: 10px 0;
         text-align: left;
         min-height: auto;
@@ -2183,7 +2184,7 @@
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
-        background: rgba(0,0,0,0.2);
+        background: rgba(0,0,0,0.03);
         padding: 10px;
         border-radius: 6px;
         margin-bottom: 10px;
@@ -2191,7 +2192,7 @@
       .data-table td::before {
         content: attr(data-label);
         font-weight: 500;
-        color: rgba(255,255,255,0.4);
+        color: rgba(0,0,0,0.5);
         text-transform: uppercase;
         font-size: 10px;
         margin-bottom: 4px;
@@ -2207,7 +2208,7 @@
         white-space: normal;
         word-wrap: break-word;
         font-size: 14px;
-        color: #fff;
+        color: var(--text);
       }
       
       /* Make Item No and Description stand out */
@@ -2235,7 +2236,7 @@
       .data-table td[data-col="5"] .cell-ro {
         font-size: 16px;
         font-weight: 600;
-        color: rgba(255,255,255,0.7);
+        color: var(--text);
       }
       .data-table td[data-col="6"]::before,
       .data-table td[data-col="5"]::before {
