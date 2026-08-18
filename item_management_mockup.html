@@ -1,0 +1,4809 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galaxy SCM · Item Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
+  <style>
+    :root {
+      --ink: #1D1C21;
+      --ink-soft: #52505C;
+      --ink-faint: #868491;
+      --paper: #F0F2F5;
+      --surface: #FFFFFF;
+      --surface-2: #F8F9FA;
+      --brass: #C1832E;
+      --brass-deep: #98671F;
+      --brass-tint: #F8F0E5;
+      --velvet: #862D3D;
+      --velvet-tint: #F6E7EA;
+      --reel: #2C5A4E;
+      --reel-tint: #E2EBE8;
+      --line: #E2E4E9;
+      --line-strong: #C9CDD4;
+      --sel: rgba(193, 131, 46, 0.12);
+      --sel-border: #C1832E;
+      --radius: 20px;
+      --radius-sm: 12px;
+      --font-display: 'Oswald', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --shadow-card: 0 12px 36px rgba(29, 28, 33, 0.04), 0 4px 12px rgba(29, 28, 33, 0.02);
+      --shadow-hover: 0 22px 50px rgba(29, 28, 33, 0.08), 0 8px 24px rgba(29, 28, 33, 0.04);
+      --shadow-modal: 0 40px 100px rgba(29, 28, 33, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      background: var(--paper);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection {
+      background: var(--brass-tint);
+      color: var(--ink);
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    input,
+    select {
+      font-family: inherit;
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--brass);
+    }
+
+    /* ---------- App shell: nav rail + main ---------- */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .navrail {
+      width: 212px;
+      flex: none;
+      background: var(--ink);
+      color: #EDEAE0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 20px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .navrail-close {
+      display: none;
+    }
+
+    .brand {
+      padding: 0 8px 18px;
+      border-bottom: 1px solid rgba(237, 234, 224, 0.14);
+      margin-bottom: 8px;
+    }
+
+    .brand-mark {
+      font-family: var(--font-display);
+      font-size: 22px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--brass);
+      line-height: 1;
+    }
+
+    .brand-sub {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #B7B2A0;
+      margin-top: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: var(--radius-sm);
+      color: #C8C3B4;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      text-align: left;
+      width: 100%;
+      border-left: 3px solid transparent;
+      transition: background .15s, color .15s;
+    }
+
+    .nav-item svg {
+      width: 16px;
+      height: 16px;
+      flex: none;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #EDEAE0;
+    }
+
+    .nav-item.active {
+      background: rgba(193, 131, 46, 0.14);
+      color: #F3E6D2;
+      border-left-color: var(--brass);
+      font-weight: 600;
+    }
+
+    .nav-foot {
+      margin-top: 0;
+      padding-top: 14px;
+      border-top: 1px solid rgba(237, 234, 224, 0.14);
+    }
+
+    .nav-foot-stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #9A9585;
+      padding: 3px 8px;
+    }
+
+    .nav-foot-stat b {
+      color: #EDEAE0;
+      font-family: var(--font-mono);
+    }
+
+    .app-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---------- Catalog top bar (filters only) ---------- */
+    .topbar {
+      padding: 16px 24px;
+      border-bottom: 1px solid #E5E1D5;
+      background: white;
+      position: relative;
+    }
+
+    .topbar-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .page-title-inline {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      flex: none;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1 1 220px;
+      max-width: 320px;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      padding: 10px 16px 10px 36px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      outline: none;
+      transition: all .2s ease;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .search-box input::placeholder {
+      color: var(--ink-faint);
+    }
+
+    .catalog-search-wrap input:focus,
+    .search-box input:focus {
+      border-color: var(--brass);
+      background: var(--surface);
+      box-shadow: 0 0 0 4px var(--brass-tint);
+    }
+
+    /* PAGINATION CSS */
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      padding: 15px 0;
+      margin-top: 10px;
+    }
+
+    .pagination-controls button {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .pagination-controls button:hover:not(:disabled) {
+      background: #f1ede8;
+      border-color: #a87c4f;
+    }
+
+    .pagination-controls button.active {
+      background: #a87c4f;
+      color: #fff;
+      border-color: #a87c4f;
+    }
+
+    .pagination-controls button:disabled {
+      background: #eee;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+
+    /* DATA TABLE CSS */
+    .data-tab-wrap {
+      flex: 1;
+      overflow: auto;
+      margin-top: 20px;
+      position: relative;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      stroke: var(--ink-faint);
+      pointer-events: none;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      flex: none;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--ink-soft);
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all .2s ease;
+      font-weight: 500;
+    }
+
+    .chip:hover {
+      background: var(--surface);
+      border-color: var(--line-strong);
+      color: var(--ink);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .chip.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--brass-tint);
+      font-weight: 600;
+    }
+
+    .chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex: none;
+    }
+
+    .dot-concession {
+      background: var(--brass);
+    }
+
+    .dot-cinemunch {
+      background: #3F7C6C;
+    }
+
+    .chip.active .dot {
+      background: var(--brass);
+    }
+
+    select.loc-select {
+      flex: none;
+      width: 172px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      outline: none;
+      transition: all .2s ease;
+    }
+
+    select.loc-select:hover {
+      background: var(--surface);
+      border-color: var(--line-strong);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    select.loc-select.active-filter {
+      border-color: var(--brass);
+      background: var(--surface);
+      color: var(--brass-deep);
+    }
+
+    /* ---------- Stats bar ---------- */
+    .stats-bar {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+      padding: 9px 30px;
+      display: flex;
+      gap: 22px;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+
+    .stats-bar b {
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    /* ---------- Catalog grid ---------- */
+    .content-wrap {
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 24px 30px 60px;
+    }
+
+    .main-header {
+      margin-bottom: 18px;
+    }
+
+    .main-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .main-sub {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      margin-top: 6px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 14px;
+    }
+
+    .item-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      transition: all .3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: cardIn .4s ease backwards;
+      position: relative;
+    }
+
+    .item-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+      border-color: var(--brass-tint);
+    }
+
+    .item-card:focus-visible {
+      outline: 2px solid var(--brass);
+      outline-offset: 2px;
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .item-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .cat-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+
+    .cat-tag .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .item-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .item-desc {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+
+    .item-no {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .item-card-bottom {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+
+    .badge-vendors {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+    }
+
+    .item-card:hover .badge-vendors {
+      background: var(--brass-tint);
+      color: var(--brass-deep);
+      border-color: transparent;
+    }
+
+    .empty-state {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 70px 20px;
+      color: var(--ink-soft);
+    }
+
+    .empty-state .glyph {
+      font-family: var(--font-display);
+      font-size: 44px;
+      color: var(--line-strong);
+      letter-spacing: 0.04em;
+    }
+
+    .empty-state p {
+      font-size: 13.5px;
+      margin-top: 8px;
+    }
+
+    /* ---------- Location-scoped table ---------- */
+    .loc-table {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .loc-table-head {
+      display: grid;
+      grid-template-columns: 52px 1.7fr 1.4fr 1fr 88px 90px 100px;
+      gap: 14px;
+      padding: 0 16px 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .loc-row {
+      display: grid;
+      grid-template-columns: 52px 1.7fr 1.4fr 1fr 88px 90px 100px;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      transition: all .25s ease;
+      animation: cardIn .4s ease backwards;
+    }
+
+    .loc-row:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+      z-index: 1;
+    }
+
+    .loc-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex: none;
+      font-size: 16px;
+      border: 1px solid var(--line);
+    }
+
+    .loc-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .loc-item {
+      min-width: 0;
+    }
+
+    .loc-item .d {
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .loc-item .c {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-faint);
+    }
+
+    .loc-vendor {
+      min-width: 0;
+    }
+
+    .loc-vendor .v {
+      font-weight: 600;
+      font-size: 12.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .loc-vendor .b {
+      font-size: 11px;
+      color: var(--brass-deep);
+      margin-top: 1px;
+    }
+
+    .loc-field {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width:760px) {
+      .loc-table-head {
+        display: none;
+      }
+
+      .loc-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .loc-thumb {
+        width: 52px;
+        height: 52px;
+      }
+
+      .loc-item .d {
+        white-space: normal;
+      }
+    }
+
+    /* ---------- Detail page (full-bleed) ---------- */
+    .detail-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 0;
+      transition: color .15s;
+    }
+
+    .detail-back:hover {
+      color: var(--ink);
+    }
+
+    .detail-back svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .detail-page-header {
+      padding: 8px 0 24px;
+    }
+
+    .detail-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .detail-cat {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .detail-itemno {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--ink);
+      margin: 0;
+    }
+
+    .detail-stats-cards {
+      display: flex;
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 180px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+
+    .sc-val {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1;
+    }
+
+    .sc-lbl {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .item-img-uploader {
+      width: 160px;
+      height: 160px;
+      border-radius: 16px;
+      background: var(--surface-2);
+      border: 1px dashed var(--line-strong);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      overflow: hidden;
+      position: relative;
+      flex: none;
+    }
+
+    .item-img-uploader:hover {
+      border-color: var(--brass);
+      background: var(--surface);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .item-img-uploader img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      position: absolute;
+      inset: 0;
+    }
+
+    .item-img-uploader .glyph {
+      font-size: 24px;
+      color: var(--ink-faint);
+    }
+
+    .item-img-uploader span {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+    }
+
+    .item-img-uploader:hover .glyph,
+    .item-img-uploader:hover span {
+      color: var(--brass);
+    }
+
+    .section-eyebrow {
+      margin: 22px 0 12px;
+    }
+
+    .section-eyebrow h3 {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .vendor-list-full {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+
+    .vendor-card-full {
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all .3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .vendor-card-full:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .vendor-card-full.hit-location {
+      border-color: var(--reel);
+      box-shadow: 0 0 0 2px var(--reel-tint);
+    }
+
+    .vcf-top {
+      display: flex;
+      gap: 12px;
+    }
+
+    .vcf-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: 7px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .vcf-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .vcf-thumb .ph {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      color: var(--ink-faint);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .vcf-name {
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .vcf-code {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+    }
+
+    .vendor-brand {
+      display: inline-flex;
+      margin-top: 6px;
+      background: var(--brass-tint);
+      color: var(--brass-deep);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      width: fit-content;
+    }
+
+    .vendor-subdesc {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.4;
+    }
+
+    .vcf-data-box {
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--line);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+
+    .field-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .vcf-locs {
+      padding-top: 11px;
+      border-top: 1px solid var(--line);
+    }
+
+    .vcf-locs-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      margin-bottom: 7px;
+    }
+
+    .loc-chips-full {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .loc-chip {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 3px 7px;
+      background: var(--surface-2);
+      border-radius: 4px;
+      color: var(--ink-soft);
+      border: 1px solid var(--line);
+    }
+
+    .loc-chip.is-active {
+      background: var(--reel);
+      color: #EAF3EF;
+      border-color: var(--reel);
+      font-weight: 600;
+    }
+
+    /* ---------- Tab bar (legacy alias kept for spacing helpers) ---------- */
+    .page-header-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ---------- Data page ---------- */
+    .data-wrap {
+      max-width: 1900px;
+      margin: 0 auto;
+      padding: 22px 30px 60px;
+    }
+
+    .data-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .data-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .lock-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+
+    .lock-pill.locked {
+      background: var(--surface-2);
+      color: var(--ink-soft);
+      border: 1px solid var(--line-strong);
+    }
+
+    .lock-pill.unlocked {
+      background: var(--reel-tint);
+      color: var(--reel);
+      border: 1px solid rgba(44, 90, 78, 0.3);
+    }
+
+    .lock-pill svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .data-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .btn {
+      padding: 9px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background .15s, opacity .15s;
+    }
+
+    .btn-primary {
+      background: var(--brass);
+      color: #241A0C;
+    }
+
+    .btn-primary:hover {
+      background: #D7963F;
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      border-color: var(--line-strong);
+      color: var(--ink);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-2);
+    }
+
+    .btn-danger {
+      background: var(--velvet);
+      color: #FBEFEC;
+    }
+
+    .btn-danger:hover {
+      background: #8C2E3B;
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .version-pop {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 300px;
+      max-height: 340px;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-modal);
+      z-index: 50;
+      display: none;
+      padding: 8px;
+    }
+
+    .version-pop.show {
+      display: block;
+    }
+
+    .version-pop-head {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      padding: 6px 8px;
+    }
+
+    .version-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .version-row:hover {
+      background: var(--surface-2);
+    }
+
+    .version-row .vname {
+      font-weight: 700;
+      font-size: 12.5px;
+    }
+
+    .version-row .vmeta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--ink-faint);
+    }
+
+    .version-row .vcur {
+      font-size: 10px;
+      color: var(--reel);
+      font-weight: 700;
+    }
+
+    .version-restore-btn {
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 5px;
+      background: var(--surface-2);
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .version-restore-btn:hover {
+      background: var(--brass-tint);
+      border-color: var(--brass);
+    }
+
+    .data-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+      margin-bottom: 12px;
+    }
+
+    .data-tab-wrap {
+      overflow: auto;
+      max-height: 74vh;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      position: relative;
+    }
+
+    table.data-table {
+      border-collapse: collapse;
+      width: max-content;
+      min-width: 100%;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      user-select: none;
+    }
+
+    .data-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: var(--ink);
+      color: #D8D4C6;
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 9.5px;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .data-table thead th:hover {
+      background: #3A362D;
+    }
+
+    .data-table thead th .th-filter {
+      background: transparent;
+      border: none;
+      border-bottom: 1px dotted rgba(255,255,255,0.3);
+      color: #E2DFD2 !important; /* Force color to apply */
+      font-family: var(--font-mono);
+      font-size: 10px;
+      width: 60px;
+      padding: 2px 0;
+      margin-left: 8px;
+    }
+    .data-table thead th .th-filter:focus {
+      outline: none;
+      border-bottom: 1px solid #E2DFD2;
+    }
+
+    .data-table thead th .sort-arrow {
+      margin-left: 4px;
+      opacity: 0.6;
+    }
+
+    .data-table thead th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 4;
+      cursor: default;
+    }
+
+    .data-table thead tr.filter-row th {
+      position: sticky;
+      top: 29px;
+      z-index: 3;
+      background: var(--surface-2);
+      padding: 0;
+      cursor: default;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .data-table thead tr.filter-row th:first-child {
+      position: sticky;
+      left: 0;
+      top: 29px;
+      z-index: 4;
+    }
+
+    .data-table thead tr.filter-row input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      padding: 6px 9px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      outline: none;
+    }
+
+    .data-table thead tr.filter-row input:focus {
+      background: var(--brass-tint);
+      color: var(--ink);
+    }
+
+    .data-table td {
+      padding: 0;
+      border-bottom: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .data-table tr:nth-child(even) td {
+      background: var(--surface-2);
+    }
+
+    .data-table td.col-actions {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      padding: 0 6px;
+      text-align: center;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      justify-content: center;
+    }
+
+    .data-table tr:nth-child(even) td.col-actions {
+      background: var(--surface-2);
+    }
+
+    .data-table input,
+    .data-table select {
+      width: 100%;
+      min-width: 104px;
+      border: none;
+      background: transparent;
+      padding: 7px 9px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .data-table input:disabled,
+    .data-table select:disabled {
+      color: var(--ink);
+      opacity: 1;
+      cursor: default;
+    }
+
+    .cell-ro {
+      padding: 7px 9px;
+      min-width: 104px;
+      white-space: nowrap;
+      color: var(--ink);
+    }
+
+    .data-cell {
+      outline: none;
+    }
+
+    .data-cell.cell-sel {
+      background: var(--sel) !important;
+      box-shadow: inset 0 0 0 1px var(--sel-border);
+    }
+
+    .row-chk {
+      width: 15px;
+      height: 15px;
+    }
+
+    .row-del-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      background: transparent;
+      color: var(--ink-faint);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background .15s, color .15s;
+    }
+
+    .row-del-btn:hover {
+      background: var(--velvet-tint);
+      color: var(--velvet);
+    }
+
+    .row-del-btn:disabled {
+      opacity: .3;
+      cursor: not-allowed;
+    }
+
+    .data-hint {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-faint);
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    /* light variant of the search box, for use on light (non-ink) backgrounds like the Images toolbar */
+    .img-thumb-cell img {
+      width: 60px;
+      height: 60px;
+      border-radius: 7px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      display: block;
+    }
+
+    .img-ph {
+      width: 60px;
+      height: 60px;
+      border-radius: 7px;
+      border: 1px dashed var(--line-strong);
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      color: var(--ink-faint);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .img-item-desc {
+      font-weight: 700;
+      font-size: 13.5px;
+    }
+
+    .img-item-no {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--ink-faint);
+      margin-top: 2px;
+    }
+
+    .img-meta {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: var(--ink-faint);
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+
+    .img-row-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .img-btn-sm {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+
+    .img-btn-sm:hover {
+      background: var(--brass-tint);
+      border-color: var(--brass);
+    }
+
+    .img-btn-sm.danger:hover {
+      background: var(--velvet-tint);
+      border-color: var(--velvet);
+      color: var(--velvet);
+    }
+
+
+    /* ---------- Modals ---------- */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(24, 22, 18, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      width: min(420px, 100%);
+      box-shadow: var(--shadow-modal);
+      animation: modalIn .18s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-head {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-head h2 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      margin: 0;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+    }
+
+    .modal-body {
+      padding: 20px 22px;
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+
+    .modal-foot {
+      padding: 16px 22px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .modal-body input[type=password] {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 15px;
+      letter-spacing: 0.2em;
+      outline: none;
+      margin-top: 10px;
+      color: var(--ink);
+    }
+
+    .modal-body input[type=password]:focus {
+      border-color: var(--brass);
+    }
+
+    .modal-error {
+      color: var(--velvet);
+      font-size: 12px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .modal-error.show {
+      display: block;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--ink-soft);
+      transition: background .15s, color .15s, border-color .15s;
+    }
+
+    .icon-btn:hover {
+      background: var(--surface-2);
+      color: var(--ink);
+    }
+
+    .icon-btn svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    /* ---------- Mobile ---------- */
+    @media (max-width: 900px) {
+      .app-shell {
+        flex-direction: column;
+      }
+
+      .navrail {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 230px;
+        z-index: 60;
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+      }
+
+      .navrail.open {
+        transform: translateX(0);
+      }
+
+      .navrail-close {
+        display: flex;
+        position: absolute;
+        top: 16px;
+        right: 14px;
+        width: 26px;
+        height: 26px;
+        align-items: center;
+        justify-content: center;
+        color: #D8D4C6;
+        cursor: pointer;
+        background: none;
+        border: none;
+      }
+
+      .mobile-topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--ink);
+        color: #F3F1E9;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+      }
+
+      .mobile-topbar button {
+        background: none;
+        border: none;
+        color: #F3F1E9;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+      }
+
+      .topbar {
+        padding: 12px 16px;
+      }
+
+      .topbar-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-box {
+        max-width: none;
+      }
+
+      select.loc-select {
+        width: 100%;
+      }
+
+      .content-wrap {
+        padding: 18px 16px 50px;
+      }
+
+      .data-wrap {
+        padding: 16px 16px 50px;
+      }
+
+      .images-wrap {
+        padding: 16px 16px 50px;
+      }
+
+      .detail-title {
+        font-size: 28px;
+      }
+
+      .vendor-list-full {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (min-width: 901px) {
+      .mobile-topbar {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+
+    .vendor-card-full {
+      transition: opacity 0.2s ease;
+    }
+
+    .vendor-card-full.dimmed {
+      opacity: 0.2;
+    }
+
+    /* ---------- Login Overlay ---------- */
+    #loginOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--ink);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: white;
+    }
+
+    .login-box {
+      width: 360px;
+      padding: 40px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      color: var(--ink);
+      box-shadow: var(--shadow-modal);
+    }
+
+    .login-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--brass);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .login-sub {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-bottom: 24px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--surface-2);
+      outline: none;
+    }
+
+    .login-input:focus {
+      border-color: var(--brass);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--brass);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .login-btn:hover {
+      background: var(--brass-deep);
+    }
+
+    #loginError {
+      color: var(--velvet);
+      font-size: 13px;
+      margin-bottom: 16px;
+      text-align: center;
+      display: none;
+    }
+
+    .logout-btn {
+      background: var(--velvet);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 14px;
+      transition: background 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: #6c2230;
+    }
+
+    /* Top Right Action Cluster */
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+
+    .top-user-email {
+      font-size: 14px;
+      color: var(--ink-soft);
+    }
+
+    .btn-outline-orange {
+      border: 1px solid #d97706;
+      color: #d97706;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-outline-orange:hover {
+      background: rgba(217, 119, 6, 0.05);
+    }
+
+    .btn-outline-gray {
+      border: 1px solid #d1d5db;
+      color: #374151;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-outline-gray:hover {
+      background: rgba(209, 213, 219, 0.3);
+    }
+
+    /* Guide Modal */
+    .guide-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .guide-modal {
+      background: white;
+      width: 90%;
+      max-width: 640px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-modal);
+      font-family: var(--font-body);
+    }
+
+    .guide-header {
+      background: #d97706;
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .guide-header h3 {
+      margin: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guide-header .close-btn {
+      background: white;
+      color: #d97706;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .guide-body {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .guide-box {
+      background: #fef3c7;
+      border: 1px dashed #f59e0b;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .guide-box h4 {
+      margin: 0 0 10px 0;
+      color: #92400e;
+      font-size: 15px;
+    }
+
+    .guide-box ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #451a03;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .guide-list h4 {
+      margin: 0 0 14px 0;
+      font-size: 16px;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guide-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+    }
+
+    .guide-item-number {
+      background: #1e3a8a;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: bold;
+      flex: none;
+    }
+
+    .guide-item-text {
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .guide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .guide-footer label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #4b5563;
+      cursor: pointer;
+    }
+
+    .guide-footer .btn-orange {
+      background: #ea580c;
+      color: white;
+      border: none;
+      padding: 8px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    /* Drawer Styles */
+    .drawer-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
+    }
+    .drawer-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .drawer {
+      position: fixed;
+      top: 0; right: -400px;
+      width: 400px;
+      height: 100vh;
+      background: #fff;
+      z-index: 10000;
+      box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.active {
+      right: 0;
+    }
+    .drawer-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+    }
+    .drawer-header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: var(--ink-dark);
+    }
+    .drawer-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--ink-soft);
+    }
+    .drawer-body {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .drawer-footer {
+      padding: 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #f8fafc;
+    }
+    .drawer-form-group {
+      margin-bottom: 16px;
+    }
+    .drawer-form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: var(--ink-dark);
+      font-size: 14px;
+    }
+    .drawer-form-group input, .drawer-form-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+  <div class="mobile-topbar">
+    <button id="mobileMenuBtn" aria-label="Mở menu">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </svg>
+    </button>
+    <div class="brand-mark" style="font-size:17px;">Galaxy · SCM</div>
+  </div>
+
+  <div class="app-shell">
+    <nav class="navrail" id="navrail">
+      <button class="navrail-close" id="navrailClose" aria-label="Đóng"><svg viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg></button>
+      <div class="brand">
+        <div class="brand-mark">Galaxy · SCM</div>
+        <div class="brand-sub">Item Management</div>
+      </div>
+      <button class="nav-item active" data-section="catalog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+        Danh mục
+      </button>
+      <button class="nav-item" data-section="data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="16" rx="1" />
+          <path d="M3 9h18M3 14h18M9 4v16" />
+        </svg>
+        Dữ liệu (Raw)
+      </button>
+      <div class="nav-foot" id="navFoot"></div>
+    </nav>
+
+    <div class="app-main">
+
+      <!-- ============ CATALOG SECTION ============ -->
+      <div id="catalogSection">
+        <header class="topbar">
+          <div class="topbar-row">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              <input type="text" id="searchInput" placeholder="Tìm theo tên sản phẩm hoặc tên NCC…" autocomplete="new-password" data-lpignore="true" readonly onfocus="this.removeAttribute('readonly');">
+            </div>
+            <div class="chip-row" id="categoryChips"></div>
+            <select class="loc-select" id="roleSwitcher"
+              style="background:var(--ink); color:white; border:none; margin-right:10px;">
+              <option value="admin">Vai trò: Admin (Full)</option>
+            </select>
+            <select class="loc-select" id="locationSelect">
+              <option value="all">Tất cả địa điểm</option>
+            </select>
+            <div class="top-actions" id="topActions">
+              <div class="top-user-email" id="topUserEmail">sonbn@galaxystudio.vn</div>
+              <button class="btn-outline-orange" onclick="showGuideModal(true)">💡 Hướng dẫn</button>
+              <button class="btn-outline-gray" onclick="handleLogout()">Đăng xuất</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="stats-bar" id="statsBlock"></div>
+
+        <!-- Catalog grid page -->
+        <div class="content-wrap" id="catalogGridPage">
+          <div class="main-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div class="main-title" id="mainTitle" style="display:inline-block; margin-right:15px;">Quản lý sản phẩm
+              </div>
+              <button class="btn btn-ghost btn-sm" id="btnSelectAllCatalog"
+                style="display:inline-block; vertical-align:middle; padding:4px 8px; font-size:12px;">Chọn tất
+                cả</button>
+              <button class="btn btn-ghost btn-sm" id="btnDeselectAllCatalog"
+                style="display:none; vertical-align:middle; padding:4px 8px; font-size:12px;">Bỏ chọn tất cả</button>
+              <div class="main-sub" id="mainSub"></div>
+            </div>
+            <button class="btn btn-danger" id="btnDeleteSelectedCatalog" style="display:none;">Xoá đã chọn</button>
+          </div>
+          <div class="grid" id="itemGrid"></div>
+        </div>
+
+        <!-- Catalog detail page (full-bleed, replaces grid) -->
+        <div class="content-wrap" id="catalogDetailPage" style="display:none;"></div>
+      </div>
+
+      <!-- ============ DATA SECTION ============ -->
+      <div id="dataSection" style="display:none;">
+        <div class="data-wrap">
+          <div class="data-toolbar">
+            <div class="data-toolbar-left" style="gap: 12px; align-items: center; display: flex;">
+              <div class="main-title" style="font-size:26px; text-transform: uppercase;">Dữ liệu thô</div>
+              <span class="lock-pill locked" id="lockPill">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="4" y="10" width="16" height="10" rx="2" />
+                  <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                </svg>
+                <span id="lockPillText">Đã khoá</span>
+              </span>
+              <input type="file" id="importFileInput" accept=".xlsx, .csv" style="display:none;" />
+              <input type="file" id="batchImageInput" accept="image/*" multiple style="display:none;" />
+              <button class="btn btn-ghost btn-sm" id="btnImportExcel" onclick="document.getElementById('importFileInput').click()" style="border: 1px solid #ccc; border-radius: 20px; padding: 4px 16px; background: white; color: black; font-weight: 600;">Nhập từ Excel</button>
+              <button class="btn btn-ghost btn-sm" id="btnBatchImages" onclick="document.getElementById('batchImageInput').click()" style="border: 1px solid #ccc; border-radius: 20px; padding: 4px 16px; background: white; color: black; font-weight: 600;">Nhập ảnh hàng loạt</button>
+              <button class="btn btn-ghost btn-sm" id="btnVersionHistory" style="border: 1px solid #ccc; border-radius: 20px; padding: 4px 16px; background: white; color: black; font-weight: 600;">Lịch sử phiên bản</button>
+              <button class="btn btn-primary btn-sm" id="btnEnterEdit" style="border-radius: 20px; padding: 4px 16px; background: #c5863d; border: none; color: white; font-weight: 600;">Edit</button>
+            </div>
+            <div class="data-toolbar-right" style="position: relative;">
+              <button class="btn btn-outline-orange btn-sm" onclick="showDataGuideModal(true)" style="border-radius: 20px;">💡 Hướng dẫn</button>
+              <button class="btn btn-outline-gray btn-sm" onclick="openGeminiKeyModal()" id="btnGeminiKeyTop" style="border-radius: 20px;">🔑 Gemini</button>
+              <div class="version-pop" id="versionPop"></div>
+              <button class="btn btn-ghost" id="btnAddRow" style="display:none;">+ Thêm dòng</button>
+              <button class="btn btn-ghost" id="btnAddRowsN" style="display:none;">+ Thêm nhiều dòng</button>
+              <button class="btn btn-primary" id="btnEditSelected" style="display:none; background: #c5863d; border: none;">Chỉnh sửa 1 dòng</button>
+              <button class="btn btn-danger" id="btnDeleteSelected" style="display:none;">Xoá dòng đã chọn</button>
+              <button class="btn btn-ghost" id="btnCancelEdit" style="display:none;">Huỷ</button>
+              <button class="btn btn-primary" id="btnSaveEdit" style="display:none;">Lưu thay đổi</button>
+            </div>
+          </div>
+          <div class="data-sub" id="dataSub"></div>
+          <div class="data-tab-wrap">
+            <table class="data-table" id="dataTable"></table>
+          </div>
+          <div id="dataPagination" class="pagination-controls"></div>
+          <div class="data-hint">
+            Đang khoá: chỉ xem &amp; copy. Bấm "Edit" và nhập mật khẩu để mở khoá — khi đó có thể sửa từng ô, bôi đen
+            nhiều ô để copy/paste hàng loạt (Ctrl+C / Ctrl+V, dán từ Excel vào thoải mái), lọc theo cột, sắp xếp theo
+            cột, thêm/xoá dòng. Chỉ khi bấm "Lưu thay đổi" thì dữ liệu mới đẩy qua tab Danh mục và tạo 1 version mới.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </div>
+
+  <!-- PASSWORD MODAL (shared by Data tab + Hình ảnh tab) -->
+  <div class="modal-backdrop" id="passwordModalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Mở khoá chỉnh sửa</h2>
+        <button class="icon-btn" id="passwordModalClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg></button>
+      </div>
+      <form id="passwordForm" autocomplete="off">
+        <div class="modal-body">
+          Nhập mật khẩu để chỉnh sửa. Sheet đang bị khoá để tránh sửa nhầm.
+          <input type="password" id="fPassword" name="scm-unlock-code" placeholder="Mật khẩu"
+            autocomplete="new-password">
+          <div class="modal-error" id="passwordError">Sai mật khẩu, thử lại.</div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-ghost" id="passwordCancel">Huỷ</button>
+          <button type="button" class="btn btn-primary" id="passwordSubmitBtn">Mở khoá</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD N ROWS MODAL -->
+  <div class="modal-backdrop" id="addNRowsModalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 style="text-transform: uppercase; font-weight: 900; font-size: 24px; letter-spacing: 0.5px; color: #1a1a1a;">Thêm nhiều dòng</h2>
+        <button class="icon-btn" id="addNRowsModalClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" /></svg></button>
+      </div>
+      <form id="addNRowsForm" autocomplete="off">
+        <div class="modal-body">
+          <div style="border: 1px solid #E5E1D5; padding: 16px; border-radius: 8px; margin-bottom: 16px; background: white;">
+            <h4 style="margin-top: 0; margin-bottom: 12px; color: #4b5563; font-size: 15px; font-weight: 700;">Cách 1: Thêm thủ công</h4>
+            <div style="color: #4b5563; margin-bottom: 8px;">Bạn muốn thêm bao nhiêu dòng trống?</div>
+            <input type="number" id="fNRows" name="n-rows-count" placeholder="7" min="1" max="500" value="7" style="width: 100px; padding: 4px 8px; border: 2px solid #1a1a1a; border-radius: 4px; font-weight: 600; margin-bottom: 12px; display: block;">
+            <button type="button" id="addNRowsSubmitBtn" style="background: #c5863d; color: #1a1a1a; border: none; border-radius: 12px; padding: 8px 20px; font-weight: 700; cursor: pointer;">Tạo dòng trống</button>
+          </div>
+
+          <div style="border: 1px solid #E5E1D5; padding: 16px; border-radius: 8px; background: #fffcf5;">
+            <h4 style="margin-top: 0; margin-bottom: 12px; color: #4b5563; font-size: 15px; font-weight: 700;">Cách 2: 🤖 Điền tự động (AI)</h4>
+            <div style="font-size: 13px; color: #4b5563; margin-bottom: 16px; line-height: 1.4;">
+              Chọn tài liệu (Word, Excel, CSV, Ảnh, PDF) &rarr; AI tự đọc và điền Tên, NCC, Địa điểm... vào bảng (cần nhập 🔑 Gemini ở góc trên một lần).
+            </div>
+            <div style="display: flex; gap: 16px; align-items: stretch;">
+              <div style="flex: 1; align-self: center;">
+                <input type="file" id="fAiImport" accept=".xlsx,.xls,.csv,.pdf,.png,.jpg,.jpeg,.doc,.docx" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: white;">
+              </div>
+              <button type="button" id="aiImportSubmitBtn" style="background: #e67e22; color: white; border: none; border-radius: 12px; padding: 12px; width: 80px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; line-height: 1.3; font-size: 13px; box-shadow: 0 4px 6px rgba(230,126,34,0.3);">
+                <span style="font-size: 16px; margin-bottom: 4px;">✨</span>
+                <span>Phân</span>
+                <span>tích</span>
+                <span>bằng</span>
+                <span>AI</span>
+              </button>
+            </div>
+            <div id="aiImportLoading" style="display: none; margin-top: 12px; font-size: 13px; color: #e67e22; font-weight: 600;">
+              🤖 AI đang đọc và trích xuất dữ liệu... vui lòng đợi vài giây...
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot" style="border-top: 1px solid #E5E1D5; padding-top: 16px; justify-content: flex-end; display: flex;">
+          <button type="button" class="btn btn-ghost" id="addNRowsCancel" style="border: 1px solid #ccc; border-radius: 12px; padding: 8px 24px; color: #1a1a1a; font-weight: 700;">Huỷ thao tác</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- GEMINI API KEY MODAL -->
+  <div class="modal-backdrop" id="geminiKeyModalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Cấu hình Gemini API Key</h2>
+        <button class="icon-btn" id="geminiKeyModalClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg></button>
+      </div>
+      <form id="geminiKeyForm" autocomplete="off">
+        <div class="modal-body">
+          Nhập mã API Key của Google Gemini để sử dụng tính năng đọc tài liệu tự động bằng trí tuệ nhân tạo.
+          <input type="password" id="fGeminiKey" placeholder="AIzaSyB..." style="margin-top: 10px; margin-bottom: 0;">
+          <div style="font-size: 11px; color: var(--ink-light); margin-top: 6px;">
+            Mã này sẽ được lưu cục bộ trên trình duyệt của bạn (Local Storage) để bảo mật.
+          </div>
+          <div style="margin-top: 12px; font-size: 13px;">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #c5863d; text-decoration: underline; font-weight: 500;">👉 Nhấn vào đây để lấy mã API Key miễn phí từ Google</a>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-ghost" id="geminiKeyCancel">Huỷ</button>
+          <button type="button" class="btn btn-primary" id="geminiKeySubmitBtn">Lưu mã Key</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
+  <div class="modal-backdrop" id="confirmBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="confirmTitle">Xác nhận</h2>
+      </div>
+      <div class="modal-body" id="confirmBody"></div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="confirmCancel">Huỷ</button>
+        <button type="button" class="btn btn-danger" id="confirmOk">Xoá</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LOGIN OVERLAY ============ -->
+  <!-- ============ GUIDE MODAL ============ -->
+  <div class="guide-overlay" id="guideOverlay">
+    <div class="guide-modal">
+      <div class="guide-header">
+        <h3>💡 Hướng dẫn sử dụng - Quản lý sản phẩm</h3>
+        <button class="close-btn" onclick="closeGuideModal()">✕ Đóng</button>
+      </div>
+      <div class="guide-body">
+        <div class="guide-box">
+          <h4>Tổng quan chức năng</h4>
+          <ul>
+            <li>Quản lý toàn bộ danh sách sản phẩm, từ hàng hóa F&B (Cinemunch) đến hàng nhượng quyền (Concession).</li>
+            <li>Hiển thị tồn kho tự động, tra cứu thông tin nhanh chóng qua chức năng tìm kiếm khẩu lệnh hoặc lọc theo
+              chi nhánh.</li>
+          </ul>
+        </div>
+        <div class="guide-list">
+          <h4><span style="font-size:18px;">👣</span> Các tính năng chính</h4>
+          <div class="guide-item">
+            <div class="guide-item-number">1</div>
+            <div class="guide-item-text">
+              <b>Tìm kiếm siêu tốc:</b> Không chỉ tìm theo tên, bạn còn có thể dùng Khẩu lệnh! Thử gõ <b>"sữa GAL"</b>
+              để hệ thống tự động lọc sản phẩm Sữa của nhà cung cấp GAL-CO.
+            </div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-item-number">2</div>
+            <div class="guide-item-text">
+              <b>Trải nghiệm đa vai trò:</b> Ở góc trên cùng, chuyển đổi giữa góc nhìn của Admin và Nhân viên chi nhánh
+              để thấy cách hệ thống tự động khóa và thanh lọc dữ liệu.
+            </div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-item-number">3</div>
+            <div class="guide-item-text">
+              <b>Lọc theo chi nhánh:</b> Bấm chọn 1 chi nhánh trên thanh dropdown để thu hẹp danh sách. (Tính năng này
+              sẽ tự động khóa nếu bạn đang ở Vai trò Nhân viên).
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="guide-footer">
+        <label><input type="checkbox" id="chkHideGuide"> Không hiển thị lại lúc khởi động</label>
+        <button class="btn-orange" onclick="closeGuideModal()">Đã hiểu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="guide-overlay" id="dataGuideOverlay" style="display: none;">
+    <div class="guide-modal">
+      <div class="guide-header">
+        <h3>💡 Hướng dẫn sử dụng - Dữ liệu thô</h3>
+        <button class="close-btn" onclick="closeDataGuideModal()">✕ Đóng</button>
+      </div>
+      <div class="guide-body">
+        <div class="guide-box">
+          <h4>Tổng quan chức năng</h4>
+          <ul>
+            <li>Quản lý nguồn dữ liệu đầu vào. Bạn có thể thêm, xoá, và chỉnh sửa trực tiếp trên bảng như một file Excel thu nhỏ.</li>
+            <li>Hỗ trợ AI tự động đọc dữ liệu từ các file văn bản, hình ảnh, PDF để điền thông tin tự động vào bảng.</li>
+          </ul>
+        </div>
+        <div class="guide-list">
+          <h4><span style="font-size:18px;">👣</span> Các tính năng chính</h4>
+          <div class="guide-item">
+            <div class="guide-item-number">1</div>
+            <div class="guide-item-text">
+              <b>+ Thêm dòng:</b> Nhấn để lập tức tạo 1 dòng trống mới ở đầu bảng, sẵn sàng để bạn nhập liệu.
+            </div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-item-number">2</div>
+            <div class="guide-item-text">
+              <b>+ Thêm nhiều dòng (AI Import):</b> Nhấn để thêm cùng lúc nhiều dòng trống hoặc sử dụng tính năng <b>✨ Phân tích bằng AI</b>. Bạn tải file lên và AI sẽ tự trích xuất dữ liệu điền vào bảng.
+            </div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-item-number">3</div>
+            <div class="guide-item-text">
+              <b>🔑 Lấy & Nhập API Key:</b> Tính năng AI cần Google Gemini API Key. Nhấn vào nút <b>🔑 Gemini</b>, bấm vào link trong bảng để lấy mã miễn phí, sau đó dán vào để kích hoạt AI.<br><br>
+              <i style="color: #ff9800;">Lưu ý: Nếu dùng quá giới hạn hoặc hết hạn mức của Key (hệ thống sẽ tự động thông báo lỗi), bạn chỉ cần vào link đó tạo một API Key mới và nhập lại là xong!</i>
+            </div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-item-number">4</div>
+            <div class="guide-item-text">
+              <b>🖼️ Nhập ảnh sản phẩm:</b> <br>
+              - <b>Từng ảnh 1:</b> Khi bạn bấm nút <b>+ Thêm dòng</b> hoặc <b>Chỉnh sửa 1 dòng</b>, một cửa sổ nhập liệu sẽ trượt ra. Hãy bấm trực tiếp vào ô vuông <b>TẢI ẢNH LÊN</b> ở trên cùng cửa sổ đó để đính kèm ảnh.<br>
+              - <b>Hàng loạt ảnh:</b> Đặt tên các file ảnh trùng với Mã sản phẩm. Sau đó nhấn nút <b>Nhập ảnh hàng loạt</b> trên thanh công cụ và chọn tất cả ảnh. Hệ thống sẽ tự động đối chiếu và ghép ảnh siêu tốc!
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="guide-footer">
+        <label><input type="checkbox" id="chkHideDataGuide"> Không hiển thị lại lúc khởi động</label>
+        <button class="btn-orange" onclick="closeDataGuideModal()">Đã hiểu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loginOverlay" style="display:none;">
+    <div class="brand-mark" style="font-size:32px; margin-bottom:24px;">GALAXY SCM</div>
+    <div class="login-box">
+      <div class="login-title">Đăng nhập hệ thống</div>
+      <div class="login-sub">Sử dụng tài khoản nội bộ để truy cập dữ liệu bảo mật</div>
+
+      <div id="loginError">Sai tài khoản hoặc mật khẩu!</div>
+
+      <input type="email" id="loginEmail" class="login-input" placeholder="Email (vd: sonbn@galaxystudio.vn)">
+      <input type="password" id="loginPass" class="login-input" placeholder="Mật khẩu"
+        onkeypress="if(event.key==='Enter') handleLogin()">
+
+      <button class="login-btn" id="btnLogin" onclick="handleLogin()">Đăng nhập</button>
+    </div>
+  </div>
+
+  <!-- Drawer HTML -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="addRowDrawer">
+    <div class="drawer-header">
+      <h3 id="drawerTitle">Thêm dòng dữ liệu mới</h3>
+      <button class="drawer-close" id="drawerClose">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawerForm">
+      <!-- Form fields will be generated here by JS -->
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-outline" id="btnCancelDrawer">Huỷ</button>
+      <button class="btn btn-primary" id="btnSaveDrawer">Thêm dòng</button>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       DATA LAYER — RAW_ROWS is the single source of truth. It is a
+       flat array mirroring the source Excel exactly (one row per
+       Location x Item x Vendor). Everything the Catalog shows is a
+       computed view over it, rebuilt by deriveCatalog().
+       ============================================================ */
+    let RAW_ROWS = [];
+    const REGION_BY_LOC = { "NDU-CO": "South", "THS-CO": "South", "GAL-CO": "South", "HTP-CO": "South", "KDV-CO": "South", "LTR-CO": "South", "NVQ-CO": "South", "PAR-CO": "South", "PHI-CO": "South", "QTR-CO": "South", "T12-CO": "South", "TBI-CO": "South", "TLO-CO": "South", "BMT-CO": "South", "BRV-CO": "South", "BTR-CO": "South", "CMA-CO": "South", "DNA-CO": "North", "GBT-CO": "South", "GCO-CO": "Central", "HPH-CO": "North", "HUE-CO": "North", "LXU-CO": "South", "MLB-CO": "North", "NTR-CO": "South", "TAN-CO": "South", "TBO-CO": "North", "VIN-CO": "North", "VVI-CO": "Central", "CBF-CO": "South", "DBP-CO": "Central", "HALONG-CO": "North", "NAMDINH-CO": "North" };
+    const LOCATIONS = ["BMT-CO", "BRV-CO", "BTR-CO", "CBF-CO", "CMA-CO", "DBP-CO", "DNA-CO", "GAL-CO", "GBT-CO", "GCO-CO", "HALONG-CO", "HPH-CO", "HTP-CO", "HUE-CO", "KDV-CO", "LTR-CO", "LXU-CO", "MLB-CO", "NAMDINH-CO", "NDU-CO", "NTR-CO", "NVQ-CO", "PAR-CO", "PHI-CO", "QTR-CO", "T12-CO", "TAN-CO", "TBI-CO", "TBO-CO", "THS-CO", "TLO-CO", "VIN-CO", "VVI-CO"];
+    const ITEM_IMAGES = {}; // key: itemNo -> {dataUrl, storedName, originalName, uploadedAt}
+    let DATA = {};
+    let seedCounter = 1;
+
+    const supabaseUrl = 'https://hotfbncvtkdjkkgpvfor.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvdGZibmN2dGtkamtrZ3B2Zm9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MzcyMzcsImV4cCI6MjEwMjUxMzIzN30.Fn9zEdCqDnZbpB-xqkvM6fiPJKA-yzD8WIimowhOYdg';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function loadDataFromSupabase() {
+      document.getElementById('dataTable').innerHTML = '<tbody><tr><td colspan="15" style="text-align:center; padding:50px; font-size: 20px;">Đang kết nối tới Supabase Đám mây...</td></tr></tbody>';
+
+      let allData = [];
+      let from = 0;
+      const step = 1000;
+
+      while (true) {
+        const { data, error } = await supabaseClient
+          .from('raw_data')
+          .select('*, items(description, category), vendors(vendor_name), locations(region)')
+          .order('created_at', { ascending: false })
+          .range(from, from + step - 1);
+
+        if (error) {
+          console.error(error);
+          document.getElementById('dataTable').innerHTML = '<tbody><tr><td colspan="15" style="text-align:center; color: red;">Lỗi kết nối Supabase: ' + error.message + '</td></tr></tbody>';
+          return;
+        }
+
+        if (data && data.length > 0) {
+          allData = allData.concat(data);
+          if (data.length < step) break; // Fetched all
+          from += step;
+        } else {
+          break;
+        }
+      }
+
+      const data = allData;
+      if (!data || data.length === 0) {
+        document.getElementById('dataTable').innerHTML = '<tbody><tr><td colspan="15" style="text-align:center;">Dữ liệu trống hoặc bị chặn bởi bảo mật RLS. Vui lòng mở quyền xem.</td></tr></tbody>';
+        RAW_ROWS = [];
+        DATA = {};
+        renderAll();
+        renderDataTable();
+        return;
+      }
+
+      // Populate ITEM_IMAGES from fetched data so images survive F5
+      data.forEach(row => {
+        if (row.image_url && !ITEM_IMAGES[row.item_no]) {
+          ITEM_IMAGES[row.item_no] = {
+            dataUrl: row.image_url,
+            storedName: row.image_url.split('/').pop(),
+            originalName: 'Cloud Image',
+            uploadedAt: row.updated_at || new Date().toISOString()
+          };
+        }
+      });
+
+      // Update RAW_ROWS
+      RAW_ROWS = data.map(row => ({
+        rid: row.rid,
+        locCode: row.loc_code,
+        region: row.locations ? row.locations.region : 'Unknown',
+        vendorCode: row.vendor_code,
+        vendorName: row.vendors ? row.vendors.vendor_name : 'Unknown Vendor',
+        itemNo: row.item_no,
+        desc: row.items ? row.items.description : '',
+        category: row.items ? row.items.category : 'Concession',
+        subDesc: row.sub_desc,
+        brand: row.brand,
+        purchUnit: row.purch_unit,
+        conversion: row.conversion,
+        baseUnit: row.base_unit,
+        moq: row.moq,
+        mov: row.mov,
+        shipIf: row.ship_if,
+        hsd: row.hsd,
+        storage: row.storage,
+        category: row.items ? row.items.category : '',
+        desc: row.items ? row.items.description : '',
+        vendorName: row.vendors ? row.vendors.vendor_name : '',
+        image_url: row.image_url
+      }));
+
+      // Exit edit mode if active
+      if (!state.dataLocked) {
+        exitEditMode();
+      }
+
+      // Re-build catalog and render
+      DATA = deriveCatalog(RAW_ROWS);
+      renderAll();
+      renderDataTable();
+    }
+
+    // --- IMPORT EXCEL LOGIC ---
+    document.getElementById('importFileInput').addEventListener('change', async function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      document.getElementById('dataTable').innerHTML = '<tr><td colspan="15" style="text-align:center; padding:50px;">Đang xử lý file Excel... Xin vui lòng đợi!</td></tr>';
+
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        const data = e.target.result;
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rows = XLSX.utils.sheet_to_json(worksheet);
+
+        console.log('Parsed rows:', rows);
+
+        // Validate rows
+        if (rows.length === 0) {
+          alert("File rỗng!");
+          loadDataFromSupabase();
+          return;
+        }
+
+        document.getElementById('dataTable').innerHTML = '<tr><td colspan="15" style="text-align:center; padding:50px;">Đang đẩy dữ liệu lên Cloud...</td></tr>';
+
+        const sanitizeNum = (val) => {
+          if (val === null || val === undefined) return null;
+          if (typeof val === 'string' && val.trim() === '') return null;
+          const num = Number(val);
+          return isNaN(num) ? null : num;
+        };
+
+        try {
+          // 1. Locations
+          const locationsMap = new Map();
+          // 2. Vendors
+          const vendorsMap = new Map();
+          // 3. Items
+          const itemsMap = new Map();
+
+          const rawDataArray = [];
+
+          for (const row of rows) {
+            // Map Excel columns to our DB columns.
+            const locCode = row['Location Code'] || row['locCode'] || row['Location'];
+            const vendorCode = row['Vendor Code'] || row['vendorCode'];
+            const vendorName = row['Vendor name'] || row['Vendor Name'] || row['vendorName'] || 'Unknown Vendor';
+            const itemNo = row['Item No'] || row['itemNo'];
+            const desc = row['Description'] || row['desc'] || '';
+            const cat = row['Category'] || row['category'] || 'Concession';
+            const region = row['Region'] || row['region'] || 'Unknown';
+
+            if (locCode) locationsMap.set(locCode, { loc_code: locCode, region: region });
+            if (vendorCode) vendorsMap.set(vendorCode, { vendor_code: vendorCode, vendor_name: vendorName });
+            if (itemNo) itemsMap.set(itemNo, { item_no: itemNo, description: desc, category: cat });
+
+            if (locCode && vendorCode && itemNo) {
+              rawDataArray.push({
+                loc_code: locCode,
+                vendor_code: vendorCode,
+                item_no: itemNo,
+                sub_desc: row['Sub Description'] || row['subDesc'] || null,
+                brand: row['Brand'] || row['brand'] || null,
+                purch_unit: row['Purchase Unit'] || row['Purch. Unit'] || row['purchUnit'] || null,
+                conversion: sanitizeNum(row['Conversion'] || row['conversion']),
+                base_unit: row['Base Unit'] || row['baseUnit'] || null,
+                moq: sanitizeNum(row['MOQ / PO'] || row['MOQ'] || row['moq']),
+                mov: sanitizeNum(row['MOV / PO'] || row['MOV'] || row['mov']),
+                ship_if: row['SHIP if <MOQ/MOV'] || row['Ship If'] || row['shipIf'] || null,
+                hsd: sanitizeNum(row['HSD (Ngày)'] || row['hsd']),
+                storage: row['Storage'] || row['Điều kiện bảo quản'] || row['storage'] || null,
+                image_url: row['Product Image'] || null
+              });
+            }
+          }
+
+          // Upsert
+          const checkErr = (res) => { if (res.error) throw res.error; };
+
+          if (locationsMap.size > 0) checkErr(await supabaseClient.from('locations').upsert(Array.from(locationsMap.values())));
+          if (vendorsMap.size > 0) checkErr(await supabaseClient.from('vendors').upsert(Array.from(vendorsMap.values())));
+          if (itemsMap.size > 0) checkErr(await supabaseClient.from('items').upsert(Array.from(itemsMap.values())));
+
+          // Raw data in chunks
+          const chunkSize = 500;
+          for (let i = 0; i < rawDataArray.length; i += chunkSize) {
+            const chunk = rawDataArray.slice(i, i + chunkSize);
+            checkErr(await supabaseClient.from('raw_data').upsert(chunk));
+          }
+
+          alert("Đã nhập dữ liệu thành công!");
+        } catch (err) {
+          console.error(err);
+          alert("Lỗi khi nhập liệu: " + err.message);
+        }
+
+        // Reset file input and reload
+        document.getElementById('importFileInput').value = '';
+        loadDataFromSupabase();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+    // ----------------------------
+
+    // --- BATCH IMAGE UPLOAD (Khớp theo tên file) ---
+    document.getElementById('batchImageInput').addEventListener('change', async function (e) {
+      if (!e.target.files || e.target.files.length === 0) return;
+      const files = Array.from(e.target.files);
+      
+      const btn = document.getElementById('btnBatchImages');
+      const oldText = btn.textContent;
+      btn.textContent = 'Đang xử lý...';
+      btn.disabled = true;
+
+      let successCount = 0;
+      let failCount = 0;
+
+      const readAsDataURL = (file) => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (evt) => resolve(evt.target.result);
+        reader.readAsDataURL(file);
+      });
+
+      for (const file of files) {
+        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "").trim().toLowerCase();
+        
+        let matchedItemNo = null;
+        for (const [itemNo, item] of Object.entries(DATA)) {
+          if (itemNo.toLowerCase() === nameWithoutExt || item.desc.toLowerCase() === nameWithoutExt) {
+            matchedItemNo = itemNo;
+            break;
+          }
+        }
+
+        if (matchedItemNo) {
+          try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${matchedItemNo}_${Date.now()}.${fileExt}`;
+            
+            const { error: uploadError } = await supabaseClient.storage
+              .from('item_images')
+              .upload(fileName, file, { cacheControl: '3600', upsert: true });
+              
+            if (uploadError) throw uploadError;
+            
+            const { data: { publicUrl } } = supabaseClient.storage
+              .from('item_images')
+              .getPublicUrl(fileName);
+              
+            const { error: dbError } = await supabaseClient
+              .from('raw_data')
+              .update({ image_url: publicUrl })
+              .eq('item_no', matchedItemNo);
+              
+            if (dbError) throw dbError;
+            
+            const dataUrl = await readAsDataURL(file);
+            ITEM_IMAGES[matchedItemNo] = { dataUrl: publicUrl };
+            DATA[matchedItemNo].image = { dataUrl: publicUrl };
+            successCount++;
+          } catch(err) {
+            console.error('Lỗi upload ảnh:', err);
+            failCount++;
+          }
+        } else {
+          failCount++;
+        }
+      }
+
+      e.target.value = '';
+      btn.textContent = oldText;
+      btn.disabled = false;
+
+      renderAll();
+      if (state.section === 'data') renderDataTable();
+
+      alert(`Đã xử lý ${files.length} ảnh.\n- Ghép thành công: ${successCount} mặt hàng\n- Bị bỏ qua (không khớp tên): ${failCount} ảnh`);
+    });
+
+    // Gọi hàm load dữ liệu khi DOM sẵn sàng
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDataFromSupabase();
+    });
+
+
+    function imgKey(itemNo, vendorName) { return itemNo + '::' + vendorName; }
+
+    function deriveCatalog(rows) {
+      const data = {};
+      rows.forEach(r => {
+        if (!r.itemNo) return;
+        let item = data[r.itemNo];
+        if (!item) {
+          item = data[r.itemNo] = { itemNo: r.itemNo, desc: r.desc || '(Chưa đặt tên)', cat: r.category || 'Concession', vendors: [] };
+          item = data[r.itemNo] = { itemNo: r.itemNo, desc: r.desc || '(Chưa đặt tên)', cat: r.category || 'Concession', vendors: [], image: null };
+          if (r.image_url) {
+            item.image = { dataUrl: r.image_url, storedName: 'from_db' };
+          }
+        } else {
+          if (r.desc) item.desc = r.desc;
+          if (r.category) item.cat = r.category;
+          if (r.image_url && !item.image) {
+            item.image = { dataUrl: r.image_url, storedName: 'from_db' };
+          }
+        }
+        if (!r.vendorName) return;
+        let vendor = item.vendors.find(v => v.vendorName === r.vendorName);
+        if (!vendor) {
+          vendor = {
+            vendorCode: r.vendorCode, vendorName: r.vendorName, subDesc: r.subDesc, brand: r.brand,
+            purchUnit: r.purchUnit, conversion: r.conversion, baseUnit: r.baseUnit,
+            moq: r.moq, mov: r.mov, shipIf: r.shipIf || 'No', hsd: r.hsd, storage: r.storage || 'Ambient',
+            locs: []
+          };
+          item.vendors.push(vendor);
+        } else {
+          vendor.vendorCode = r.vendorCode || vendor.vendorCode;
+          vendor.subDesc = r.subDesc; vendor.brand = r.brand;
+          vendor.purchUnit = r.purchUnit; vendor.conversion = r.conversion; vendor.baseUnit = r.baseUnit;
+          vendor.moq = r.moq; vendor.mov = r.mov; vendor.shipIf = r.shipIf || 'No';
+          vendor.hsd = r.hsd; vendor.storage = r.storage || 'Ambient';
+        }
+        if (r.locCode && !vendor.locs.includes(r.locCode)) vendor.locs.push(r.locCode);
+      });
+      Object.values(data).forEach(item => item.vendors.forEach(v => v.locs.sort()));
+      return data;
+    }
+
+    const DATA_FIELDS = [
+      { key: 'region', label: 'Region', type: 'select', options: ['South', 'Central', 'North'] },
+      { key: 'locCode', label: 'Location Code', type: 'select', options: LOCATIONS },
+      { key: 'vendorName', label: 'Vendor name', type: 'text' },
+      { key: 'vendorCode', label: 'Vendor Code', type: 'text' },
+      { key: 'category', label: 'Category', type: 'select', options: ['Concession', 'Cinemunch'] },
+      { key: 'itemNo', label: 'Item No', type: 'text' },
+      { key: 'desc', label: 'Description', type: 'text' },
+      { key: 'subDesc', label: 'Sub Description', type: 'text' },
+      { key: 'brand', label: 'Brand', type: 'text' },
+      { key: 'purchUnit', label: 'Purchase Unit', type: 'text' },
+      { key: 'conversion', label: 'Conversion', type: 'number' },
+      { key: 'baseUnit', label: 'Base Unit', type: 'text' },
+      { key: 'moq', label: 'MOQ / PO', type: 'number' },
+      { key: 'mov', label: 'MOV / PO', type: 'number' },
+      { key: 'shipIf', label: 'SHIP if <MOQ/MOV', type: 'select', options: ['No', 'Yes'] },
+      { key: 'hsd', label: 'HSD (Ngày)', type: 'number' },
+      { key: 'storage', label: 'Storage', type: 'select', options: ['Ambient', 'Chilled', 'Frozen'] }
+    ];
+
+    function blankRow() {
+      return {
+        region: 'South', locCode: LOCATIONS[0], vendorName: '', vendorCode: '', category: 'Concession',
+        itemNo: '', desc: '', subDesc: '', brand: '', purchUnit: '', conversion: null, baseUnit: '',
+        moq: null, mov: null, shipIf: 'No', hsd: null, storage: 'Ambient'
+      };
+    }
+
+    /* ============ VERSION HISTORY ============ */
+    let VERSIONS = [];
+    function pushVersion() {
+      VERSIONS.push({
+        version: VERSIONS.length + 1,
+        timestamp: new Date().toISOString(),
+        rows: RAW_ROWS.map(r => Object.assign({}, r))
+      });
+    }
+
+    /* ============ STATE ============ */
+    const state = {
+      section: 'catalog', // catalog, data
+      category: 'all',
+      location: 'all',
+      role: 'admin', // admin, BTR-CO, GAL-CO
+      search: '',
+      selCatalog: new Set(),
+      selectedItem: null,
+      dataLocked: true,
+      dataDraft: [],
+      dataFilters: {},
+      dataSort: { field: null, dir: null },
+      dataSelectedRids: new Set(),
+      dataSel: null, dataSelecting: false,
+      catalogSelectedItems: new Set(),
+      dataPage: 1,
+      dataRowsPerPage: 100,
+      pendingConfirm: null,
+      pendingRestoreAfterUnlock: null,
+      passwordTarget: 'data',    // 'data' | 'images' -- which sheet the password modal is unlocking
+      imagesLocked: true,
+      imageDraft: null,
+      imagesSearch: '',
+      pendingImageRestoreAfterUnlock: null
+    };
+    let dataVisualRows = [];
+    let IMAGE_VERSIONS = [];
+
+    /* ============ HELPERS ============ */
+    function normalize(str) {
+      return (str || '').toString().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd');
+    }
+    function matchesQuery(text, normalizedQuery) {
+      if (!normalizedQuery) return true;
+      const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
+      const textWords = normalize(text).split(/\s+/).filter(Boolean);
+
+      // Every word in the query must match the start of SOME word in the text.
+      // This allows "sua tuoi" to match "Sữa tươi không đường" and even out-of-order like "tuoi sua"
+      return queryWords.every(qw => textWords.some(tw => tw.startsWith(qw)));
+    }
+    function itemHasLocation(item, loc) {
+      if (loc === 'all') return true;
+      return item.vendors.some(v => v.locs.includes(loc));
+    }
+    function vendorHasLocation(v, loc) { return loc !== 'all' && v.locs.includes(loc); }
+    function fmt(val, fallback) { return (val === null || val === undefined || val === '') ? (fallback || '—') : val; }
+    function storageIcon(s) {
+      if (s === 'Chilled') return '❄';
+      if (s === 'Frozen') return '🧊';
+      return '☀';
+    }
+    function getAllItems() {
+      return Object.values(DATA).sort((a, b) => a.desc.localeCompare(b.desc, 'vi'));
+    }
+
+    /* ============ NAV / SECTION SWITCH ============ */
+    function setSection(section) {
+      state.section = section;
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.section === section));
+      document.getElementById('catalogSection').style.display = section === 'catalog' ? '' : 'none';
+      document.getElementById('dataSection').style.display = section === 'data' ? '' : 'none';
+      if (section === 'catalog') {
+        renderCategoryChips();
+        renderStats();
+        if (state.selectedItem && DATA[state.selectedItem]) showDetailPage(state.selectedItem);
+        else showGridPage();
+      } else if (section === 'data') {
+        renderDataTable();
+        showDataGuideModal();
+      }
+      document.getElementById('navrail').classList.remove('open');
+    }
+    document.querySelectorAll('.nav-item').forEach(b => {
+      b.addEventListener('click', () => setSection(b.dataset.section));
+    });
+    document.getElementById('mobileMenuBtn').onclick = () => document.getElementById('navrail').classList.add('open');
+    document.getElementById('navrailClose').onclick = () => document.getElementById('navrail').classList.remove('open');
+
+    function renderNavFoot() {
+      const items = getAllItems();
+      const vendorSet = new Set();
+      items.forEach(it => it.vendors.forEach(v => vendorSet.add(v.vendorName)));
+      document.getElementById('navFoot').innerHTML = `
+    <div class="nav-foot-stat"><span>Sản phẩm</span><b>${items.length}</b></div>
+    <div class="nav-foot-stat"><span>Nhà cung cấp</span><b>${vendorSet.size}</b></div>
+  `;
+    }
+
+    /* ============ CATALOG: FILTERS ============ */
+    function renderCategoryChips() {
+      const cats = [
+        { key: 'all', label: 'Tất cả' },
+        { key: 'Concession', label: 'Concession', dot: 'dot-concession' },
+        { key: 'Cinemunch', label: 'Cinemunch', dot: 'dot-cinemunch' }
+      ];
+      const el = document.getElementById('categoryChips');
+      el.innerHTML = cats.map(c => `
+    <button class="chip ${state.category === c.key ? 'active' : ''}" data-cat="${c.key}">
+      ${c.dot ? `<span class="dot ${c.dot}"></span>` : ''}${c.label}
+    </button>`).join('');
+      el.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => { state.category = btn.dataset.cat; renderAll(); });
+      });
+    }
+    function renderLocationSelect() {
+      const roleSw = document.getElementById('roleSwitcher');
+      if (roleSw && !roleSw.dataset.initialized) {
+        roleSw.innerHTML = `<option value="admin">Vai trò: Admin (Full)</option>` +
+          LOCATIONS.map(l => `<option value="${l}">Nhân viên: ${l}</option>`).join('');
+        roleSw.value = state.role;
+        roleSw.dataset.initialized = 'true';
+      }
+
+      const sel = document.getElementById('locationSelect');
+      sel.innerHTML = `<option value="all">Tất cả địa điểm</option>` +
+        LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('');
+      sel.value = state.location;
+
+      // Layer 1: Context-Aware auto-filter lock
+      if (state.role !== 'admin') {
+        sel.disabled = true;
+        sel.title = "Bộ lọc đã bị khóa theo vai trò của bạn";
+        sel.style.opacity = '0.6';
+      } else {
+        sel.disabled = false;
+        sel.title = "";
+        sel.style.opacity = '1';
+      }
+
+      sel.classList.toggle('active-filter', state.location !== 'all');
+      sel.onchange = () => { state.location = sel.value; sel.classList.toggle('active-filter', state.location !== 'all'); renderAll(); };
+    }
+    function filteredItems() {
+      let q = normalize(state.search.trim());
+      let implicitLocation = state.location;
+
+      // Layer 2: Omni-Search
+      if (q && state.role === 'admin') {
+        const words = q.split(/\s+/);
+        const locWordIndex = words.findIndex(w => w.length >= 3 && LOCATIONS.some(l => normalize(l).startsWith(w)));
+        if (locWordIndex !== -1) {
+          const matchWord = words[locWordIndex];
+          const foundLoc = LOCATIONS.find(l => normalize(l).startsWith(matchWord));
+          if (foundLoc) {
+            implicitLocation = foundLoc;
+            words.splice(locWordIndex, 1);
+            q = words.join(' ').trim();
+          }
+        }
+      }
+
+      const items = getAllItems().filter(item => {
+        if (state.category !== 'all' && item.cat !== state.category) return false;
+        if (!itemHasLocation(item, implicitLocation)) return false;
+        if (q) {
+          const queryWords = normalize(q).split(/\s+/).filter(Boolean);
+          const genericWords = new Set(['sua', 'cong', 'ty', 'cp', 'co', 'phan', 'tnhh', 'viet', 'nam', 'chi', 'nhanh', 'cn', 'nha', 'may']);
+          
+          const isMatch = queryWords.every(qw => {
+             const inDesc = normalize(item.desc).split(/\s+/).some(tw => tw.startsWith(qw));
+             const inBrand = item.vendors.some(v => normalize(v.brand).split(/\s+/).some(tw => tw.startsWith(qw)));
+             const inVendorCode = item.vendors.some(v => normalize(v.vendorCode).split(/\s+/).some(tw => tw.startsWith(qw)));
+             
+             let inVendorName = false;
+             if (!genericWords.has(qw)) {
+                inVendorName = item.vendors.some(v => normalize(v.vendorName).split(/\s+/).some(tw => tw.startsWith(qw)));
+             }
+             
+             return inDesc || inBrand || inVendorCode || inVendorName;
+          });
+          if (!isMatch) return false;
+        }
+        return true;
+      });
+      if (!q) return items;
+      /* Relevance ranking */
+      const scoreOf = (item) => {
+        const normDesc = normalize(item.desc);
+        if (normDesc === q) return 0; // Exact match
+        if (normDesc.startsWith(q)) return 1; // Prefix match
+        if (matchesQuery(item.desc, q)) return 2; // Word match (e.g. out of order or middle)
+        return 3; // Vendor match
+      };
+      return items.slice().sort((a, b) => {
+        const diff = scoreOf(a) - scoreOf(b);
+        return diff !== 0 ? diff : a.desc.localeCompare(b.desc, 'vi');
+      });
+    }
+    function renderStats() {
+      const items = getAllItems();
+      const vendorSet = new Set();
+      items.forEach(it => {
+        it.vendors.forEach(v => vendorSet.add(v.vendorName));
+      });
+      let html = `
+    <span><b>${items.length}</b> sản phẩm</span>
+    <span><b>${vendorSet.size}</b> nhà cung cấp</span>
+  `;
+      if (state.location !== 'all') {
+        const atLoc = items.filter(it => itemHasLocation(it, state.location)).length;
+        html += `<span><b>${atLoc}</b> sản phẩm đang dùng tại ${state.location}</span>`;
+      }
+      document.getElementById('statsBlock').innerHTML = html;
+    }
+
+    /* ============ CATALOG: GRID / LOCATION TABLE ============ */
+    function renderGrid() {
+      const items = filteredItems();
+      const grid = document.getElementById('itemGrid');
+      const titleEl = document.getElementById('mainTitle');
+      const subEl = document.getElementById('mainSub');
+
+      if (state.location !== 'all') {
+        titleEl.textContent = `Đang dùng tại ${state.location}`;
+        subEl.textContent = `${items.length} sản phẩm đang được đặt hàng tại địa điểm này`;
+        renderLocationTable(items, grid);
+      } else {
+        titleEl.textContent = 'Quản lý sản phẩm';
+        subEl.textContent = `${items.length} / ${getAllItems().length} sản phẩm`;
+        renderItemGridCards(items, grid);
+      }
+    }
+    function renderItemGridCards(items, grid) {
+      grid.className = 'grid';
+      if (items.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><div class="glyph">∅</div><p>Không tìm thấy sản phẩm phù hợp bộ lọc hiện tại.</p></div>`;
+        return;
+      }
+      grid.innerHTML = items.map((item, i) => {
+        const dot = item.cat === 'Concession' ? 'dot-concession' : 'dot-cinemunch';
+        return `
+    <div class="item-card" tabindex="0" data-item="${item.itemNo}" style="animation-delay:${Math.min(i * 20, 280)}ms">
+      <div class="item-card-top">
+        <div class="cat-tag"><span class="dot ${dot}"></span>${item.cat}</div>
+        <input type="checkbox" class="catalog-chk" data-catalog-chk="${item.itemNo}" ${state.catalogSelectedItems.has(item.itemNo) ? 'checked' : ''} style="transform:scale(1.2); cursor:pointer;">
+      </div>
+      <div class="item-card-body">
+        <div class="item-desc">${item.desc}</div>
+        <div class="item-no">${item.itemNo}</div>
+      </div>
+      <div class="item-card-bottom">
+        <span class="badge badge-vendors">${item.vendors.length} NCC</span>
+      </div>
+    </div>`;
+      }).join('');
+      grid.querySelectorAll('.item-card').forEach(card => {
+        card.addEventListener('click', () => showDetailPage(card.dataset.item));
+        card.addEventListener('keydown', e => { if (e.key === 'Enter') showDetailPage(card.dataset.item); });
+      });
+    }
+    function renderLocationTable(items, grid) {
+      grid.className = 'loc-table';
+      if (items.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><div class="glyph">∅</div><p>Không có sản phẩm nào đang dùng tại ${state.location} khớp bộ lọc hiện tại.</p></div>`;
+        return;
+      }
+      const head = `
+    <div class="loc-table-head">
+      <div></div><div>Sản phẩm</div><div>Nhà cung cấp</div><div>Đơn vị mua</div><div>MOQ/PO</div><div>HSD</div><div>Storage</div>
+    </div>`;
+      const rows = items.map((item, i) => {
+        const v = item.vendors.find(x => vendorHasLocation(x, state.location));
+        if (!v) return '';
+        return `
+    <div class="loc-row" data-item="${item.itemNo}" style="animation-delay:${Math.min(i * 16, 240)}ms">
+      <div class="loc-thumb">${item.image ? `<img src="${item.image.dataUrl}" alt="">` : '🖼'}</div>
+      <div class="loc-item">
+        <div class="d">${item.desc}</div>
+        <div class="c">${item.itemNo}</div>
+      </div>
+      <div class="loc-vendor">
+        <div class="v">${v.vendorName}</div>
+        <div class="b">${fmt(v.brand)}</div>
+      </div>
+      <div class="loc-field">${fmt(v.purchUnit)}</div>
+      <div class="loc-field">MOQ ${fmt(v.moq)}</div>
+      <div class="loc-field">${fmt(v.hsd)} ngày</div>
+      <div class="loc-field">${storageIcon(v.storage)} ${fmt(v.storage)}</div>
+    </div>`;
+      }).join('');
+      grid.innerHTML = head + rows;
+      grid.querySelectorAll('.loc-row').forEach(r => {
+        r.addEventListener('click', () => showDetailPage(r.dataset.item));
+      });
+    }
+
+    /* ============ CATALOG: DETAIL PAGE (full-bleed, read-only) ============ */
+    function showDetailPage(itemNo) {
+      state.selectedItem = itemNo;
+      document.getElementById('catalogGridPage').style.display = 'none';
+      document.getElementById('catalogDetailPage').style.display = '';
+      renderDetailPage();
+      window.scrollTo({ top: 0 });
+    }
+    function showGridPage() {
+      state.selectedItem = null;
+      document.getElementById('catalogDetailPage').style.display = 'none';
+      document.getElementById('catalogGridPage').style.display = '';
+      renderGrid();
+    }
+    function renderAll() {
+      renderCategoryChips();
+      renderStats();
+      renderNavFoot();
+      if (state.selectedItem && DATA[state.selectedItem]) renderDetailPage();
+      else renderGrid();
+    }
+
+    function renderDetailPage() {
+      const item = DATA[state.selectedItem];
+      const panel = document.getElementById('catalogDetailPage');
+      if (!item) { showGridPage(); return; }
+
+      // Áp dụng logic Omni-Search tương tự như bên ngoài lưới
+      let effectiveLocation = state.location;
+      let q = normalize(state.search.trim());
+      if (q && state.role === 'admin') {
+        const words = q.split(/\s+/);
+        const locWordIndex = words.findIndex(w => w.length >= 3 && LOCATIONS.some(l => normalize(l).startsWith(w)));
+        if (locWordIndex !== -1) {
+          const matchWord = words[locWordIndex];
+          const foundLoc = LOCATIONS.find(l => normalize(l).startsWith(matchWord));
+          if (foundLoc) {
+            effectiveLocation = foundLoc;
+          }
+        }
+      }
+
+      const filtering = effectiveLocation !== 'all';
+      const vendorsToShow = filtering ? item.vendors.filter(v => vendorHasLocation(v, effectiveLocation)) : item.vendors;
+      const dot = item.cat === 'Concession' ? 'dot-concession' : 'dot-cinemunch';
+      const totalLocs = new Set(item.vendors.flatMap(v => v.locs)).size;
+
+      const filterNote = filtering
+        ? `<div class="data-sub" style="margin:-8px 0 4px;">Đang lọc theo <b style="color:var(--reel);">${effectiveLocation}</b> — chỉ hiện NCC thực sự cấp cho địa điểm này.</div>`
+        : '';
+
+      panel.innerHTML = `
+    <div class="detail-page-header">
+      <div class="detail-top-bar">
+        <button class="detail-back" id="btnBackToGrid">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          Danh mục
+        </button>
+        <button class="btn btn-danger btn-sm" id="btnDeleteThisItem">Xoá sản phẩm</button>
+      </div>
+      
+      <div style="display:flex; gap:24px;">
+        <div class="item-img-uploader" style="cursor: default; border-color: var(--line-light); background: transparent;">
+          ${item.image ? `<img src="${item.image.dataUrl}">` : `<div class="glyph" style="opacity: 0.5;">🖼</div><span style="opacity: 0.5;">Không có ảnh</span>`}
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:12px; justify-content:center;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="detail-cat"><span class="dot ${dot}"></span>${item.cat}</div>
+            <div class="detail-itemno">${item.itemNo}</div>
+          </div>
+          <div class="detail-title">${item.desc}</div>
+        </div>
+      </div>
+      
+      <div class="detail-stats-cards">
+        <div class="stat-card">
+          <div class="sc-val">${item.vendors.length}</div>
+          <div class="sc-lbl">Nhà cung cấp</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-val">${totalLocs}</div>
+          <div class="sc-lbl">Địa điểm đang dùng</div>
+        </div>
+      </div>
+    </div>
+    <div class="section-eyebrow" style="margin-top:24px;"><h3>${filtering ? `NCC đang cấp cho ${effectiveLocation}` : 'Nhà cung cấp theo item này'}</h3></div>
+    ${filterNote}
+    <div class="vendor-list-full">${vendorsToShow.map(v => renderVendorCardFull(v, effectiveLocation)).join('') || '<div class="empty-state" style="grid-column:1/-1;padding:30px;"><p>Không có NCC nào khớp địa điểm đang lọc.</p></div>'}</div>
+  `;
+      document.getElementById('btnBackToGrid').onclick = showGridPage;
+
+      const imgInput = document.getElementById(`itemImgUpload_${item.itemNo}`);
+      if (imgInput) {
+        imgInput.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          try {
+            // Hiển thị trạng thái đang tải...
+            const lbl = imgInput.closest('label').querySelector('span');
+            if(lbl) lbl.textContent = 'Đang tải lên...';
+            
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${item.itemNo}_${Date.now()}.${fileExt}`;
+
+            // 1. Upload to Supabase Storage
+            const { error: uploadError } = await supabaseClient.storage
+              .from('item_images')
+              .upload(fileName, file, { cacheControl: '3600', upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabaseClient.storage
+              .from('item_images')
+              .getPublicUrl(fileName);
+
+            // 3. Update all raw_data rows for this item_no
+            const { error: dbError } = await supabaseClient
+              .from('raw_data')
+              .update({ image_url: publicUrl })
+              .eq('item_no', item.itemNo);
+
+            if (dbError) throw dbError;
+
+            // 4. Update local state
+            ITEM_IMAGES[item.itemNo] = { 
+              dataUrl: publicUrl, 
+              storedName: fileName, 
+              originalName: file.name,
+              uploadedAt: new Date().toISOString()
+            };
+            item.image = ITEM_IMAGES[item.itemNo];
+            
+            // Xóa giá trị file input để cho phép chọn lại file cũ nếu cần
+            e.target.value = '';
+            renderDetailPage(); // Re-render to show image immediately
+          } catch (error) {
+            console.error('Lỗi khi tải ảnh:', error);
+            alert('Lỗi khi tải ảnh lên. Vui lòng kiểm tra đã tạo public bucket "item_images" chưa và thử lại. Lỗi: ' + error.message);
+            const lbl = imgInput.closest('label').querySelector('span');
+            if(lbl) lbl.textContent = 'Tải ảnh lên';
+          }
+        };
+      }
+
+      const btnDeleteThisItem = document.getElementById('btnDeleteThisItem');
+      if (btnDeleteThisItem) {
+        btnDeleteThisItem.onclick = () => {
+          confirmAction('Xoá sản phẩm', `Bạn có chắc chắn muốn xoá sản phẩm ${item.itemNo}? Mọi dữ liệu thô liên quan sẽ bị xoá vĩnh viễn khỏi Cloud.`, () => {
+            deleteCatalogItems([item.itemNo]);
+          });
+        };
+      }
+      const clearBtn = document.getElementById('btnClearLocFilterDetail');
+      if (clearBtn) {
+        clearBtn.onclick = (e) => {
+          e.preventDefault();
+          state.location = 'all';
+          document.getElementById('locationSelect').value = 'all';
+          document.getElementById('locationSelect').classList.remove('active-filter');
+          renderDetailPage();
+        };
+      }
+    }
+
+    // Layer 3: Hover-to-highlight
+    window.highlightLocation = function (loc) {
+      document.querySelectorAll('.vendor-card-full').forEach(card => {
+        const locs = card.dataset.locs ? card.dataset.locs.split(',') : [];
+        if (!locs.includes(loc)) card.classList.add('dimmed');
+      });
+    };
+    window.clearHighlightLocation = function () {
+      document.querySelectorAll('.vendor-card-full').forEach(card => {
+        card.classList.remove('dimmed');
+      });
+    };
+
+    window.setDetailLocationFilter = function (loc) {
+      if (state.role !== 'admin') return; // Locked for branch users
+      if (state.location === loc) {
+        state.location = 'all'; // Toggle off if already selected
+      } else {
+        state.location = loc;
+      }
+      document.getElementById('locationSelect').value = state.location;
+      document.getElementById('locationSelect').classList.toggle('active-filter', state.location !== 'all');
+      renderDetailPage();
+    };
+
+    function renderVendorCardFull(v, filterLoc = 'all') {
+      const locsToShow = (filterLoc && filterLoc !== 'all') ? v.locs.filter(l => l === filterLoc) : v.locs;
+      return `
+  <div class="vendor-card-full" data-locs="${v.locs.join(',')}">
+    <div class="vcf-top" style="display:flex; align-items:center; gap:16px;">
+      <div>
+        <div class="vcf-name">${v.vendorName}</div>
+        <div class="vcf-code">${fmt(v.vendorCode)}</div>
+        <div class="vendor-brand">${fmt(v.brand)}</div>
+      </div>
+    </div>
+    <div class="vendor-subdesc">${fmt(v.subDesc)}</div>
+    
+    <div class="vcf-data-box">
+      <div class="field-grid">
+        <div class="field"><span class="field-label">Purchase Unit</span><span class="field-val">${fmt(v.purchUnit)}</span></div>
+        <div class="field"><span class="field-label">MOQ / PO</span><span class="field-val">${fmt(v.moq)}</span></div>
+        <div class="field"><span class="field-label">MOV / PO</span><span class="field-val">${fmt(v.mov)}</span></div>
+        <div class="field"><span class="field-label">Ship nếu &lt;MOQ/MOV</span><span class="field-val">${v.shipIf === 'Yes' ? 'Có' : 'Không'}</span></div>
+        <div class="field"><span class="field-label">HSD (Ngày)</span><span class="field-val">${fmt(v.hsd)} ngày</span></div>
+        <div class="field"><span class="field-label">Storage</span><span class="field-val">${storageIcon(v.storage)} ${fmt(v.storage)}</span></div>
+      </div>
+    </div>
+
+    <div class="vcf-locs">
+      <div class="vcf-locs-label">${filterLoc !== 'all' ? 'Địa điểm đang lọc:' : `Áp dụng tại ${locsToShow.length} địa điểm:`}</div>
+      <div class="loc-chips-full">${locsToShow.map(l => `<span class="loc-chip ${l === filterLoc ? 'is-active' : ''}" onclick="setDetailLocationFilter('${l}')" onmouseenter="highlightLocation('${l}')" onmouseleave="clearHighlightLocation()" style="cursor:pointer;" title="${state.role !== 'admin' ? 'Bạn không có quyền đổi bộ lọc' : (l === state.location ? 'Bấm để huỷ lọc' : 'Bấm để lọc theo địa điểm này')}">${l}</span>`).join('')}</div>
+    </div>
+  </div>`;
+    }
+
+    document.getElementById('searchInput').addEventListener('input', e => { state.search = e.target.value; renderAll(); });
+
+    // Role Switcher Logic
+    const roleSw = document.getElementById('roleSwitcher');
+    if (roleSw) {
+      roleSw.addEventListener('change', e => {
+        state.role = e.target.value;
+        if (state.role !== 'admin') {
+          state.location = state.role;
+        } else {
+          state.location = 'all';
+        }
+        document.getElementById('locationSelect').value = state.location;
+        renderLocationSelect();
+        renderAll();
+      });
+    }
+
+    /* ============ DATA TAB: source + filter/sort ============ */
+    function getDataSource() { return state.dataLocked ? RAW_ROWS : state.dataDraft; }
+    function applyFiltersSort(rows) {
+      let out = rows;
+      const activeKeys = Object.keys(state.dataFilters).filter(k => state.dataFilters[k]);
+      if (activeKeys.length) {
+        out = out.filter(r => activeKeys.every(k => {
+          const val = (r[k] === null || r[k] === undefined ? '' : r[k]).toString().toLowerCase();
+          return val.includes(state.dataFilters[k].toLowerCase());
+        }));
+      }
+      if (state.dataSort) {
+        const { field, dir } = state.dataSort;
+        out = out.slice().sort((a, b) => {
+          let av = a[field], bv = b[field];
+          if (av === null || av === undefined) av = '';
+          if (bv === null || bv === undefined) bv = '';
+          if (typeof av === 'number' && typeof bv === 'number') return dir === 'asc' ? av - bv : bv - av;
+          av = av.toString().toLowerCase(); bv = bv.toString().toLowerCase();
+          if (av < bv) return dir === 'asc' ? -1 : 1;
+          if (av > bv) return dir === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+      return out;
+    }
+
+    function renderDataTable() {
+      const source = getDataSource();
+      const visible = applyFiltersSort(source);
+
+      // PAGINATION
+      const totalRows = visible.length;
+      const totalPages = Math.ceil(totalRows / state.dataRowsPerPage) || 1;
+      if (state.dataPage > totalPages) state.dataPage = totalPages;
+      if (state.dataPage < 1) state.dataPage = 1;
+
+      const startIndex = (state.dataPage - 1) * state.dataRowsPerPage;
+      const endIndex = Math.min(startIndex + state.dataRowsPerPage, totalRows);
+      const pagedRows = visible.slice(startIndex, endIndex);
+
+      dataVisualRows = pagedRows;
+      dataVisualRows = pagedRows;
+      document.getElementById('dataSub').textContent = `Hiển thị dòng ${totalRows > 0 ? startIndex + 1 : 0} - ${endIndex} / Tổng ${totalRows} dòng (Trang ${state.dataPage}/${totalPages})`;
+
+      const editing = !state.dataLocked;
+      const table = document.getElementById('dataTable');
+
+      const headCells = DATA_FIELDS.map(f => {
+        const arrow = (state.dataSort && state.dataSort.field === f.key) ? (state.dataSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+        const fval = state.dataFilters[f.key] || '';
+        return `<th>
+      <div class="th-inner">
+        <span class="th-label" data-sort-field="${f.key}">${f.label}${arrow}</span>
+        <input type="text" autocomplete="new-password" data-lpignore="true" readonly onfocus="this.removeAttribute('readonly');" class="th-filter" data-filter-field="${f.key}" placeholder="lọc..." value="${fval.replace(/"/g, '&quot;')}">
+      </div>
+    </th>`;
+      }).join('');
+      const thead = `<thead><tr><th style="min-width:44px;"></th>${headCells}</tr></thead>`;
+
+      const bodyRows = pagedRows.map((r, vr) => {
+        const cells = DATA_FIELDS.map((f, ci) => {
+          const val = r[f.key];
+          let inner;
+          if (editing) {
+            if (f.type === 'select') {
+              let opts = f.options.slice();
+              if (val && !opts.includes(val)) opts = [val, ...opts];
+              inner = `<select data-rid="${r.rid}" data-field="${f.key}">${opts.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+            } else if (f.type === 'number') {
+              inner = `<input type="number" data-rid="${r.rid}" data-field="${f.key}" value="${val === null || val === undefined ? '' : val}">`;
+            } else {
+              const safe = (val === null || val === undefined ? '' : val).toString().replace(/"/g, '&quot;');
+              inner = `<input type="text" data-rid="${r.rid}" data-field="${f.key}" value="${safe}">`;
+            }
+          } else {
+            const disp = (val === null || val === undefined || val === '') ? '—' : val;
+            inner = `<div class="cell-ro">${disp}</div>`;
+          }
+          return `<td class="data-cell" data-vr="${vr}" data-col="${ci}">${inner}</td>`;
+        }).join('');
+        const actionsCell = editing
+          ? `<td class="col-actions"><input type="checkbox" class="row-chk" data-row-chk="${r.rid}" ${state.dataSelectedRids.has(r.rid) ? 'checked' : ''}><button class="row-del-btn" data-del-row="${r.rid}" title="Xoá dòng"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2m-1 0v14a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V6h6z"/></svg></button></td>`
+          : `<td class="col-actions">${vr + 1}</td>`;
+        return `<tr data-rid="${r.rid}">${actionsCell}${cells}</tr>`;
+      }).join('');
+
+      table.innerHTML = thead + `<tbody>${bodyRows}</tbody>`;
+
+      applySelectionHighlight();
+
+      // Render pagination
+      renderDataPagination(totalRows, totalPages);
+    }
+
+    function renderDataPagination(totalRows, totalPages) {
+      const container = document.getElementById('dataPagination');
+      if (totalRows === 0 || totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+
+      // Prev button
+      const prevDisabled = state.dataPage === 1 ? 'disabled' : '';
+      html += `<button ${prevDisabled} onclick="goToDataPage(${state.dataPage - 1})">< Trước</button>`;
+
+      // Page buttons
+      let startPage = Math.max(1, state.dataPage - 2);
+      let endPage = Math.min(totalPages, state.dataPage + 2);
+
+      if (startPage > 1) {
+        html += `<button onclick="goToDataPage(1)">1</button>`;
+        if (startPage > 2) html += `<span>...</span>`;
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const activeClass = i === state.dataPage ? 'active' : '';
+        html += `<button class="${activeClass}" onclick="goToDataPage(${i})">${i}</button>`;
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span>...</span>`;
+        html += `<button onclick="goToDataPage(${totalPages})">${totalPages}</button>`;
+      }
+
+      // Next button
+      const nextDisabled = state.dataPage === totalPages ? 'disabled' : '';
+      html += `<button ${nextDisabled} onclick="goToDataPage(${state.dataPage + 1})">Tiếp ></button>`;
+
+      container.innerHTML = html;
+    }
+
+    window.goToDataPage = function (page) {
+      state.dataPage = page;
+      renderDataTable();
+      document.querySelector('.data-tab-wrap').scrollTop = 0;
+    };
+
+    /* ============ DATA TAB: add / delete rows ============ */
+    function addDataRow() {
+      const row = Object.assign({ rid: 'r' + (seedCounter++) }, blankRow());
+      state.dataDraft.unshift(row);
+      state.dataPage = 1;
+      renderDataTable();
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`input[data-rid="${row.rid}"][data-field="itemNo"]`);
+        if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
+      });
+    }
+    function addDataRows(n, prefillData = null) {
+      const newRows = [];
+      for (let i = 0; i < n; i++) {
+        let r = Object.assign({ rid: 'r' + (seedCounter++) }, blankRow());
+        if (prefillData && prefillData[i]) {
+          Object.assign(r, prefillData[i]);
+        }
+        newRows.push(r);
+      }
+      state.dataDraft.unshift(...newRows);
+      state.dataPage = 1;
+      renderDataTable();
+    }
+    function updateBulkDeleteBtn() {
+      const btnDel = document.getElementById('btnDeleteSelected');
+      const btnEdit = document.getElementById('btnEditSelected');
+      if (!state.dataLocked && state.dataSelectedRids.size > 0) {
+        btnDel.style.display = ''; 
+        btnDel.textContent = `Xoá ${state.dataSelectedRids.size} dòng đã chọn`;
+        
+        if (state.dataSelectedRids.size === 1) {
+          btnEdit.style.display = '';
+        } else {
+          btnEdit.style.display = 'none';
+        }
+      } else {
+        btnDel.style.display = 'none';
+        btnEdit.style.display = 'none';
+      }
+    }
+
+    /* ============ DATA TAB: selection + copy/paste ============ */
+    function applySelectionHighlight() {
+      document.querySelectorAll('#dataTable .data-cell.cell-sel').forEach(c => c.classList.remove('cell-sel'));
+      if (!state.dataSel) return;
+      const { r1, c1, r2, c2 } = state.dataSel;
+      const rMin = Math.min(r1, r2), rMax = Math.max(r1, r2), cMin = Math.min(c1, c2), cMax = Math.max(c1, c2);
+      document.querySelectorAll('#dataTable .data-cell').forEach(cell => {
+        const vr = Number(cell.dataset.vr), col = Number(cell.dataset.col);
+        if (vr >= rMin && vr <= rMax && col >= cMin && col <= cMax) cell.classList.add('cell-sel');
+      });
+    }
+
+    const dataWrap = document.querySelector('.data-tab-wrap');
+
+    dataWrap.addEventListener('mousedown', e => {
+      const cell = e.target.closest('[data-vr][data-col]');
+      if (!cell) return;
+      const vr = Number(cell.dataset.vr), col = Number(cell.dataset.col);
+      if (e.shiftKey && state.dataSel) {
+        state.dataSel.r2 = vr; state.dataSel.c2 = col;
+      } else {
+        state.dataSel = { r1: vr, c1: col, r2: vr, c2: col };
+        state.dataSelecting = true;
+      }
+      applySelectionHighlight();
+    });
+    dataWrap.addEventListener('mouseover', e => {
+      if (!state.dataSelecting || !state.dataSel) return;
+      const cell = e.target.closest('[data-vr][data-col]');
+      if (!cell) return;
+      state.dataSel.r2 = Number(cell.dataset.vr);
+      state.dataSel.c2 = Number(cell.dataset.col);
+      applySelectionHighlight();
+    });
+    document.addEventListener('mouseup', () => { state.dataSelecting = false; });
+
+    dataWrap.addEventListener('click', e => {
+      const sortEl = e.target.closest('[data-sort-field]');
+      if (sortEl) {
+        const field = sortEl.dataset.sortField;
+        if (state.dataSort && state.dataSort.field === field) {
+          state.dataSort = (state.dataSort.dir === 'asc') ? { field, dir: 'desc' } : null;
+        } else {
+          state.dataSort = { field, dir: 'asc' };
+        }
+        state.dataPage = 1;
+        renderDataTable();
+        return;
+      }
+      const delBtn = e.target.closest('[data-del-row]');
+      if (delBtn && !state.dataLocked) {
+        const rid = delBtn.dataset.delRow;
+        const row = state.dataDraft.find(r => r.rid === rid);
+        if (!row) return;
+        confirmAction('Xoá dòng?', `Xoá dòng "${row.desc || row.itemNo || '(trống)'} · ${row.vendorName || '(chưa có NCC)'} · ${row.locCode || '?'}"?`, () => {
+          state.dataDraft = state.dataDraft.filter(r => r.rid !== rid);
+          state.dataSelectedRids.delete(rid);
+          renderDataTable();
+          updateBulkDeleteBtn();
+        });
+      }
+    });
+
+    dataWrap.addEventListener('input', e => {
+      const fEl = e.target.closest('[data-filter-field]');
+      if (!fEl) return;
+      const field = fEl.dataset.filterField;
+      state.dataFilters[field] = fEl.value;
+      state.dataPage = 1;
+      const cursorPos = fEl.selectionStart;
+      renderDataTable();
+      const newEl = dataWrap.querySelector(`[data-filter-field="${field}"]`);
+      if (newEl) { newEl.focus(); newEl.setSelectionRange(cursorPos, cursorPos); }
+    });
+
+    dataWrap.addEventListener('change', e => {
+      const t = e.target;
+      if (t.matches('[data-rid][data-field]')) {
+        if (state.dataLocked) return;
+        const rid = t.dataset.rid, field = t.dataset.field;
+        const row = state.dataDraft.find(r => r.rid === rid);
+        if (!row) return;
+        const fieldDef = DATA_FIELDS.find(f => f.key === field);
+        row[field] = fieldDef.type === 'number' ? (t.value === '' ? null : Number(t.value)) : t.value;
+        renderDataTable();
+        return;
+      }
+      if (t.id === 'chkAll') {
+        const isChecked = t.checked;
+        if (isChecked) {
+          dataVisualRows.forEach(r => state.dataSelectedRids.add(r.rid));
+        } else {
+          dataVisualRows.forEach(r => state.dataSelectedRids.delete(r.rid));
+        }
+        document.querySelectorAll('#dataTable .row-chk:not(#chkAll)').forEach(cb => {
+          cb.checked = isChecked;
+        });
+        updateBulkDeleteBtn();
+        return;
+      }
+      if (t.matches('[data-row-chk]')) {
+        const rid = t.dataset.rowChk;
+        if (t.checked) state.dataSelectedRids.add(rid); else state.dataSelectedRids.delete(rid);
+        updateBulkDeleteBtn();
+      }
+    });
+
+    document.addEventListener('copy', e => {
+      if (state.section !== 'data' || !state.dataSel) return;
+      const active = document.activeElement;
+      const withinTable = (active && active.closest && active.closest('#dataTable')) || document.querySelector('#dataTable .cell-sel');
+      if (!withinTable) return;
+      const { r1, c1, r2, c2 } = state.dataSel;
+      const rMin = Math.min(r1, r2), rMax = Math.max(r1, r2), cMin = Math.min(c1, c2), cMax = Math.max(c1, c2);
+      const lines = [];
+      for (let r = rMin; r <= rMax; r++) {
+        const row = dataVisualRows[r];
+        if (!row) continue;
+        const cells = [];
+        for (let c = cMin; c <= cMax; c++) {
+          const field = DATA_FIELDS[c];
+          if (!field) continue;
+          const val = row[field.key];
+          cells.push(val === null || val === undefined ? '' : val);
+        }
+        lines.push(cells.join('\t'));
+      }
+      e.clipboardData.setData('text/plain', lines.join('\n'));
+      e.preventDefault();
+    });
+
+    document.addEventListener('paste', e => {
+      if (state.section !== 'data' || state.dataLocked) return;
+      const active = document.activeElement;
+      if (!(active && active.closest && active.closest('#dataTable'))) return;
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      if (!text) return;
+      e.preventDefault();
+
+      const startR = state.dataSel ? Math.min(state.dataSel.r1, state.dataSel.r2) : 0;
+      const startC = state.dataSel ? Math.min(state.dataSel.c1, state.dataSel.c2) : 0;
+      const rows = text.replace(/\r/g, '').split('\n').filter((line, i, arr) => !(i === arr.length - 1 && line === ''));
+
+      rows.forEach((line, i) => {
+        const cols = line.split('\t');
+        const targetVr = startR + i;
+        let row;
+        if (targetVr < dataVisualRows.length) {
+          row = dataVisualRows[targetVr];
+        } else {
+          row = Object.assign({ rid: 'r' + (seedCounter++) }, blankRow());
+          state.dataDraft.push(row);
+        }
+        cols.forEach((val, j) => {
+          const field = DATA_FIELDS[startC + j];
+          if (!field) return;
+          row[field.key] = field.type === 'number' ? (val === '' ? null : Number(val)) : val;
+        });
+      });
+      renderDataTable();
+    });
+
+    // btnAddRow onclick is handled at the bottom for the slide-out drawer
+    // btnAddRowsN onclick is handled via modal
+    document.getElementById('btnDeleteSelected').onclick = () => {
+      const n = state.dataSelectedRids.size;
+      confirmAction('Xoá dòng đã chọn?', `Xoá ${n} dòng đã chọn khỏi phiên chỉnh sửa này?`, () => {
+        state.dataDraft = state.dataDraft.filter(r => !state.dataSelectedRids.has(r.rid));
+        state.dataSelectedRids.clear();
+        renderDataTable();
+        updateBulkDeleteBtn();
+      }, 'Xoá', 'btn-danger');
+    };
+
+    /* ============ SHARED PASSWORD MODAL (used by both Data tab and Hình ảnh tab) ============ */
+    function openPasswordModal(target) {
+      state.passwordTarget = target || 'data';
+      document.getElementById('fPassword').value = '';
+      document.getElementById('passwordError').classList.remove('show');
+      document.getElementById('passwordModalBackdrop').classList.add('show');
+      document.getElementById('fPassword').focus();
+    }
+    function closePasswordModal() { document.getElementById('passwordModalBackdrop').classList.remove('show'); }
+
+    function attemptPasswordUnlock() {
+      const val = document.getElementById('fPassword').value.trim();
+      if (val === '123456') {
+        closePasswordModal();
+        if (state.passwordTarget === 'images') {
+          enterImageEditMode();
+          if (state.pendingImageRestoreAfterUnlock) {
+            state.imageDraft = Object.assign({}, state.pendingImageRestoreAfterUnlock.images);
+            state.pendingImageRestoreAfterUnlock = null;
+            renderImagesTable();
+          }
+        } else {
+          enterEditMode();
+          if (state.pendingRestoreAfterUnlock) {
+            state.dataDraft = state.pendingRestoreAfterUnlock.rows.map(r => Object.assign({}, r));
+            state.pendingRestoreAfterUnlock = null;
+            renderDataTable();
+          }
+        }
+      } else {
+        document.getElementById('passwordError').classList.add('show');
+        document.getElementById('fPassword').value = '';
+        document.getElementById('fPassword').focus();
+      }
+    }
+    /* Wired three ways on purpose (button click, Enter keydown, form submit) so unlocking
+       never silently fails regardless of how the click/keypress is captured. */
+    document.getElementById('passwordSubmitBtn').addEventListener('click', e => { e.preventDefault(); attemptPasswordUnlock(); });
+    document.getElementById('fPassword').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); attemptPasswordUnlock(); }
+    });
+    document.getElementById('passwordForm').addEventListener('submit', e => { e.preventDefault(); attemptPasswordUnlock(); });
+    document.getElementById('passwordModalClose').onclick = closePasswordModal;
+    document.getElementById('passwordCancel').onclick = closePasswordModal;
+    document.getElementById('btnEnterEdit').onclick = () => openPasswordModal('data');
+
+    function enterEditMode() {
+      state.dataLocked = false;
+      state.dataDraft = RAW_ROWS.map(r => Object.assign({}, r));
+      state.dataSelectedRids = new Set();
+      state.dataSel = null;
+      updateLockUI();
+      renderDataTable();
+    }
+    function exitEditMode() {
+      state.dataLocked = true;
+      state.dataDraft = null;
+      state.dataSelectedRids = new Set();
+      state.dataSel = null;
+      updateLockUI();
+      renderDataTable();
+    }
+    function updateLockUI() {
+      const editing = !state.dataLocked;
+      document.getElementById('lockPill').className = 'lock-pill ' + (editing ? 'unlocked' : 'locked');
+      document.getElementById('lockPillText').textContent = editing ? 'Đang chỉnh sửa' : 'Đã khoá';
+      document.getElementById('btnEnterEdit').style.display = editing ? 'none' : '';
+      document.getElementById('btnAddRow').style.display = editing ? '' : 'none';
+      document.getElementById('btnAddRowsN').style.display = editing ? '' : 'none';
+      document.getElementById('btnCancelEdit').style.display = editing ? '' : 'none';
+      document.getElementById('btnSaveEdit').style.display = editing ? '' : 'none';
+      updateBulkDeleteBtn();
+    }
+
+    document.getElementById('btnCancelEdit').onclick = () => {
+      confirmAction('Huỷ chỉnh sửa?', 'Mọi thay đổi trong phiên chỉnh sửa này sẽ bị bỏ — vì chưa Lưu nên dữ liệu thật chưa hề bị ảnh hưởng.', () => {
+        exitEditMode();
+      }, 'Huỷ chỉnh sửa', 'btn-danger');
+    };
+    document.getElementById('btnSaveEdit').onclick = () => {
+      const invalidRows = state.dataDraft.filter(r => !r.itemNo || !r.vendorCode || !r.locCode);
+      if (invalidRows.length > 0) {
+        alert(`Bạn có ${invalidRows.length} dòng đang để trống Mã Item, Mã NCC hoặc Mã Địa Điểm. Vui lòng điền đầy đủ thông tin hoặc xoá các dòng trống này trước khi Lưu!`);
+        return;
+      }
+      
+      confirmAction('Lưu lên Đám mây?', `Bạn sắp đồng bộ ${state.dataDraft.length} dòng lên Supabase. Quá trình này sẽ xoá những dòng bạn đã xoá, và cập nhật/thêm những dòng mới. Bạn có chắc chắn?`, async () => {
+        await syncDraftToSupabase();
+      }, 'Đồng bộ ngay', 'btn-primary');
+    };
+
+    async function syncDraftToSupabase() {
+      document.getElementById('dataTable').innerHTML = '<tbody><tr><td colspan="15" style="text-align:center; padding:50px; font-size: 20px;">Đang đồng bộ dữ liệu lên Đám mây, vui lòng đợi...</td></tr></tbody>';
+
+      const originalRids = new Set(RAW_ROWS.map(r => r.rid));
+      const currentRids = new Set(state.dataDraft.map(r => r.rid));
+      const deletedRids = [...originalRids].filter(id => !currentRids.has(id));
+
+      try {
+        if (deletedRids.length > 0) {
+          for (let i = 0; i < deletedRids.length; i += 100) {
+            const chunk = deletedRids.slice(i, i + 100);
+            const { error } = await supabaseClient.from('raw_data').delete().in('rid', chunk);
+            if (error) throw error;
+          }
+        }
+
+        const itemsMap = new Map();
+        const vendorsMap = new Map();
+        const locationsMap = new Map();
+        const rawUpdates = [];
+        const rawInserts = [];
+
+        for (const r of state.dataDraft) {
+          if (!r.itemNo || !r.vendorCode || !r.locCode) continue;
+
+          itemsMap.set(r.itemNo, { item_no: r.itemNo, description: r.desc || '', category: r.cat || 'Concession' });
+          vendorsMap.set(r.vendorCode, { vendor_code: r.vendorCode, vendor_name: r.vendorName || 'Unknown Vendor' });
+          locationsMap.set(r.locCode, { loc_code: r.locCode, region: REGION_BY_LOC[r.locCode] || r.region || 'Unknown' });
+
+          const rawRow = {
+            loc_code: r.locCode,
+            vendor_code: r.vendorCode,
+            item_no: r.itemNo,
+            sub_desc: r.subDesc || '',
+            brand: r.brand || '',
+            purch_unit: r.purchUnit || '',
+            conversion: isNaN(parseFloat(r.conversion)) ? null : parseFloat(r.conversion),
+            base_unit: r.baseUnit || '',
+            moq: isNaN(parseInt(r.moq)) ? null : parseInt(r.moq),
+            mov: isNaN(parseInt(r.mov)) ? null : parseInt(r.mov),
+            ship_if: r.shipIf || '',
+            hsd: isNaN(parseInt(r.hsd)) ? null : parseInt(r.hsd),
+            storage: r.storage || '',
+            image_url: r.imageUrl || null
+          };
+
+          if (!String(r.rid).startsWith('r')) {
+            rawRow.rid = r.rid;
+            rawUpdates.push(rawRow);
+          } else {
+            rawInserts.push(rawRow);
+          }
+        }
+
+        if (itemsMap.size > 0) {
+          const { error } = await supabaseClient.from('items').upsert(Array.from(itemsMap.values()));
+          if (error) throw error;
+        }
+        if (vendorsMap.size > 0) {
+          const { error } = await supabaseClient.from('vendors').upsert(Array.from(vendorsMap.values()));
+          if (error) throw error;
+        }
+        if (locationsMap.size > 0) {
+          const { error } = await supabaseClient.from('locations').upsert(Array.from(locationsMap.values()));
+          if (error) throw error;
+        }
+
+        if (rawUpdates.length > 0) {
+          for (let i = 0; i < rawUpdates.length; i += 1000) {
+            const chunk = rawUpdates.slice(i, i + 1000);
+            const { error } = await supabaseClient.from('raw_data').upsert(chunk);
+            if (error) throw error;
+          }
+        }
+        
+        if (rawInserts.length > 0) {
+          for (let i = 0; i < rawInserts.length; i += 1000) {
+            const chunk = rawInserts.slice(i, i + 1000);
+            const { error } = await supabaseClient.from('raw_data').insert(chunk);
+            if (error) throw error;
+          }
+        }
+
+        alert('Lưu lên Đám mây thành công!');
+
+        await loadDataFromSupabase(); // Reload completely 
+
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi khi lưu lên mây: ' + err.message);
+        document.getElementById('dataTable').innerHTML = '<tbody><tr><td colspan="15" style="text-align:center; color: red;">' + err.message + '</td></tr></tbody>';
+        exitEditMode();
+      }
+    }
+
+    /* ============ VERSION HISTORY ============ */
+    function renderVersionPop() {
+      const pop = document.getElementById('versionPop');
+      const rowsHtml = VERSIONS.slice().reverse().map(v => {
+        const isCurrent = v.version === VERSIONS.length;
+        const dt = new Date(v.timestamp);
+        const dtStr = dt.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return `
+    <div class="version-row">
+      <div>
+        <div class="vname">Version ${v.version}${isCurrent ? ' <span class="vcur">· hiện tại</span>' : ''}</div>
+        <div class="vmeta">${dtStr} · ${v.rows.length} dòng</div>
+      </div>
+      ${isCurrent ? '' : `<button class="version-restore-btn" data-restore-version="${v.version}">Khôi phục</button>`}
+    </div>`;
+      }).join('');
+      pop.innerHTML = `<div class="version-pop-head">Lịch sử phiên bản (${VERSIONS.length})</div>${rowsHtml}`;
+      pop.querySelectorAll('[data-restore-version]').forEach(b => {
+        b.addEventListener('click', () => {
+          const vnum = Number(b.dataset.restoreVersion);
+          const version = VERSIONS.find(v => v.version === vnum);
+          pop.classList.remove('show');
+          restoreVersion(version);
+        });
+      });
+    }
+    function restoreVersion(version) {
+      confirmAction(
+        `Khôi phục Version ${version.version}?`,
+        `Nạp lại ${version.rows.length} dòng từ Version ${version.version} vào phiên chỉnh sửa. Vẫn cần bấm "Lưu thay đổi" để chính thức áp dụng làm version mới nhất.`,
+        () => {
+          if (state.dataLocked) {
+            state.pendingRestoreAfterUnlock = version;
+            openPasswordModal('data');
+          } else {
+            state.dataDraft = version.rows.map(r => Object.assign({}, r));
+            renderDataTable();
+          }
+        }, 'Khôi phục', 'btn-primary'
+      );
+    }
+    document.getElementById('btnVersionHistory').onclick = e => {
+      e.stopPropagation();
+      const pop = document.getElementById('versionPop');
+      const willShow = !pop.classList.contains('show');
+      pop.classList.toggle('show', willShow);
+      if (willShow) renderVersionPop();
+    };
+
+    /* ============================================================
+       IMAGES TAB — rows are auto-derived from whatever (Item x Vendor)
+       pairs currently exist in the Catalog; you can't add/remove rows
+       here, only attach/replace/remove an image per row. Same
+       locked-by-password + draft-copy + versioned-Save pattern as the
+       Data tab, kept as a fully separate IMAGES / IMAGE_VERSIONS store.
+       ============================================================ */
+    function getImageRows() {
+      const rows = [];
+      getAllItems().forEach(item => {
+        item.vendors.forEach(v => {
+          rows.push({ itemNo: item.itemNo, desc: item.desc, vendorName: v.vendorName, key: imgKey(item.itemNo, v.vendorName) });
+        });
+      });
+      return rows;
+    }
+    function buildStoredName(itemDesc, vendorName, file) {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const clean = s => (s || '').replace(/[\\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_');
+      return `${clean(itemDesc)}_${clean(vendorName)}.${ext}`;
+    }
+
+    function renderImagesTable() {
+      const editing = !state.imagesLocked;
+      const source = editing ? state.imageDraft : ITEM_IMAGES;
+      const allRows = getImageRows();
+      const q = normalize(state.imagesSearch);
+      const rows = q ? allRows.filter(r => normalize(r.desc).includes(q) || normalize(r.vendorName).includes(q)) : allRows;
+
+      const table = document.getElementById('imagesTable');
+      const bodyRows = rows.map(r => {
+        const img = source[r.key];
+        const thumb = img ? `<img src="${img.dataUrl}" alt="">` : `<div class="img-ph">Chưa<br>có ảnh</div>`;
+        const meta = img ? `<div class="img-meta">${img.storedName}<br>${new Date(img.uploadedAt).toLocaleDateString('vi-VN')}</div>` : '';
+        const actions = editing ? `
+      <div class="img-row-actions">
+        <button class="img-btn-sm" data-img-upload="${r.key}">${img ? 'Đổi ảnh' : 'Tải lên'}</button>
+        ${img ? `<button class="img-btn-sm danger" data-img-remove="${r.key}">Xoá</button>` : ''}
+        <input type="file" accept="image/*" style="display:none" data-img-file="${r.key}">
+      </div>` : '';
+        return `<tr>
+      <td class="img-thumb-cell">${thumb}</td>
+      <td><div class="img-item-desc">${r.desc}</div><div class="img-item-no">${r.itemNo}</div></td>
+      <td>${r.vendorName}</td>
+      <td>${meta}${actions}</td>
+    </tr>`;
+      }).join('');
+
+      table.innerHTML = `
+    <thead><tr><th>Ảnh</th><th>Item</th><th>Nhà cung cấp</th><th>${editing ? 'Thao tác' : 'Ghi chú'}</th></tr></thead>
+    <tbody>${bodyRows}</tbody>`;
+      document.getElementById('imagesSub').textContent =
+        `${rows.length} / ${allRows.length} dòng (Item × NCC) · ${Object.keys(source).length} đã có ảnh`;
+    }
+
+    const imagesWrap = document.querySelector('.images-tab-wrap');
+    if (imagesWrap) {
+      imagesWrap.addEventListener('click', e => {
+        const uploadBtn = e.target.closest('[data-img-upload]');
+        if (uploadBtn) {
+          const key = uploadBtn.dataset.imgUpload;
+          const input = imagesWrap.querySelector(`[data-img-file="${CSS.escape(key)}"]`);
+          if (input) input.click();
+          return;
+        }
+        const removeBtn = e.target.closest('[data-img-remove]');
+        if (removeBtn) {
+          const key = removeBtn.dataset.imgRemove;
+          confirmAction('Xoá ảnh?', 'Xoá ảnh đã upload cho dòng này khỏi phiên chỉnh sửa?', () => {
+            delete state.imageDraft[key];
+            renderImagesTable();
+          }, 'Xoá', 'btn-danger');
+        }
+      });
+      imagesWrap.addEventListener('change', e => {
+        const fileInput = e.target.closest('[data-img-file]');
+        if (!fileInput) return;
+        const key = fileInput.dataset.imgFile;
+        const file = fileInput.files[0];
+        if (!file || state.imagesLocked) return;
+        const row = getImageRows().find(r => r.key === key);
+        const itemDesc = row ? row.desc : key;
+        const vendorName = row ? row.vendorName : '';
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.imageDraft[key] = {
+            dataUrl: reader.result,
+            storedName: buildStoredName(itemDesc, vendorName, file),
+            originalName: file.name,
+            uploadedAt: new Date().toISOString()
+          };
+          renderImagesTable();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    const imagesSearchInput = document.getElementById('imagesSearchInput');
+    if (imagesSearchInput) {
+      imagesSearchInput.addEventListener('input', e => {
+        state.imagesSearch = e.target.value;
+        renderImagesTable();
+      });
+    }
+
+    function enterImageEditMode() {
+      state.imagesLocked = false;
+      state.imageDraft = Object.assign({}, ITEM_IMAGES);
+      updateImagesLockUI();
+      renderImagesTable();
+    }
+    function exitImageEditMode() {
+      state.imagesLocked = true;
+      state.imageDraft = null;
+      updateImagesLockUI();
+      renderImagesTable();
+    }
+    function updateImagesLockUI() {
+      const editing = !state.imagesLocked;
+      document.getElementById('imagesLockPill').className = 'lock-pill ' + (editing ? 'unlocked' : 'locked');
+      document.getElementById('imagesLockPillText').textContent = editing ? 'Đang chỉnh sửa' : 'Đã khoá';
+      document.getElementById('btnImagesEnterEdit').style.display = editing ? 'none' : '';
+      document.getElementById('btnImagesCancelEdit').style.display = editing ? '' : 'none';
+      document.getElementById('btnImagesSaveEdit').style.display = editing ? '' : 'none';
+    }
+    const btnEnterEdit = document.getElementById('btnImagesEnterEdit');
+    if (btnEnterEdit) btnEnterEdit.onclick = () => openPasswordModal('images');
+    const btnCancelEdit = document.getElementById('btnImagesCancelEdit');
+    if (btnCancelEdit) btnCancelEdit.onclick = () => {
+      confirmAction('Huỷ chỉnh sửa ảnh?', 'Mọi thay đổi ảnh trong phiên này sẽ bị bỏ — vì chưa Lưu nên chưa ảnh hưởng dữ liệu thật.', () => {
+        exitImageEditMode();
+      }, 'Huỷ chỉnh sửa', 'btn-danger');
+    };
+    const btnSaveEdit = document.getElementById('btnImagesSaveEdit');
+    if (btnSaveEdit) btnSaveEdit.onclick = () => {
+      const count = Object.keys(state.imageDraft).length;
+      confirmAction('Lưu thay đổi ảnh?', `Lưu ${count} ảnh thành 1 version mới. Danh mục sẽ cập nhật ảnh ngay sau khi lưu.`, () => {
+        Object.keys(ITEM_IMAGES).forEach(k => delete ITEM_IMAGES[k]);
+        Object.assign(ITEM_IMAGES, state.imageDraft);
+        pushImageVersion();
+        DATA = deriveCatalog(RAW_ROWS);
+        exitImageEditMode();
+      }, 'Lưu thay đổi', 'btn-primary');
+    };
+
+    function pushImageVersion() {
+      IMAGE_VERSIONS.push({
+        version: IMAGE_VERSIONS.length + 1,
+        timestamp: new Date().toISOString(),
+        images: Object.assign({}, ITEM_IMAGES),
+        count: Object.keys(ITEM_IMAGES).length
+      });
+    }
+    function renderImageVersionPop() {
+      const pop = document.getElementById('imageVersionPop');
+      const rowsHtml = IMAGE_VERSIONS.slice().reverse().map(v => {
+        const isCurrent = v.version === IMAGE_VERSIONS.length;
+        const dt = new Date(v.timestamp);
+        const dtStr = dt.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return `
+    <div class="version-row">
+      <div>
+        <div class="vname">Version ${v.version}${isCurrent ? ' <span class="vcur">· hiện tại</span>' : ''}</div>
+        <div class="vmeta">${dtStr} · ${v.count} ảnh</div>
+      </div>
+      ${isCurrent ? '' : `<button class="version-restore-btn" data-restore-img-version="${v.version}">Khôi phục</button>`}
+    </div>`;
+      }).join('');
+      pop.innerHTML = `<div class="version-pop-head">Lịch sử phiên bản ảnh (${IMAGE_VERSIONS.length})</div>${rowsHtml}`;
+      pop.querySelectorAll('[data-restore-img-version]').forEach(b => {
+        b.addEventListener('click', () => {
+          const vnum = Number(b.dataset.restoreImgVersion);
+          const version = IMAGE_VERSIONS.find(v => v.version === vnum);
+          pop.classList.remove('show');
+          restoreImageVersion(version);
+        });
+      });
+    }
+    function restoreImageVersion(version) {
+      confirmAction(
+        `Khôi phục Version ${version.version}?`,
+        `Nạp lại ${version.count} ảnh từ Version ${version.version} vào phiên chỉnh sửa. Vẫn cần bấm "Lưu thay đổi" để chính thức áp dụng.`,
+        () => {
+          if (state.imagesLocked) {
+            state.pendingImageRestoreAfterUnlock = version;
+            openPasswordModal('images');
+          } else {
+            state.imageDraft = Object.assign({}, version.images);
+            renderImagesTable();
+          }
+        }, 'Khôi phục', 'btn-primary'
+      );
+    }
+    const btnVersion = document.getElementById('btnImagesVersionHistory');
+    if (btnVersion) btnVersion.onclick = e => {
+      e.stopPropagation();
+      const pop = document.getElementById('imageVersionPop');
+      const willShow = !pop.classList.contains('show');
+      pop.classList.toggle('show', willShow);
+      if (willShow) renderImageVersionPop();
+    };
+
+    document.addEventListener('click', e => {
+      const pop = document.getElementById('versionPop');
+      if (pop.classList.contains('show') && !pop.contains(e.target) && e.target.id !== 'btnVersionHistory') {
+        pop.classList.remove('show');
+      }
+      const imgPop = document.getElementById('imageVersionPop');
+      if (imgPop && imgPop.classList.contains('show') && !imgPop.contains(e.target) && e.target.id !== 'btnImagesVersionHistory') {
+        imgPop.classList.remove('show');
+      }
+    });
+
+
+    /* ============ CONFIRM MODAL ============ */
+    function confirmAction(title, body, onOk, okLabel, okClass) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmBody').textContent = body;
+      const okBtn = document.getElementById('confirmOk');
+      okBtn.textContent = okLabel || 'Xoá';
+      okBtn.className = 'btn ' + (okClass || 'btn-danger');
+      state.pendingConfirm = onOk;
+      document.getElementById('confirmBackdrop').classList.add('show');
+    }
+    document.getElementById('confirmOk').onclick = () => {
+      document.getElementById('confirmBackdrop').classList.remove('show');
+      if (state.pendingConfirm) state.pendingConfirm();
+      state.pendingConfirm = null;
+    };
+    document.getElementById('confirmCancel').onclick = () => {
+      document.getElementById('confirmBackdrop').classList.remove('show');
+      state.pendingConfirm = null;
+    };
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closePasswordModal();
+        document.getElementById('confirmBackdrop').classList.remove('show');
+        document.getElementById('versionPop').classList.remove('show');
+      }
+    });
+
+    /* ============ CATALOG DELETE ============ */
+    function updateCatalogDeleteBtn() {
+      const btn = document.getElementById('btnDeleteSelectedCatalog');
+      if (!btn) return;
+      if (state.catalogSelectedItems.size > 0) {
+        btn.style.display = '';
+        btn.textContent = `Xoá ${state.catalogSelectedItems.size} sản phẩm đã chọn`;
+        document.getElementById('btnSelectAllCatalog').style.display = 'none';
+        document.getElementById('btnDeselectAllCatalog').style.display = 'inline-block';
+      } else {
+        btn.style.display = 'none';
+        document.getElementById('btnSelectAllCatalog').style.display = 'inline-block';
+        document.getElementById('btnDeselectAllCatalog').style.display = 'none';
+      }
+    }
+
+    document.getElementById('btnSelectAllCatalog').addEventListener('click', () => {
+      document.querySelectorAll('.catalog-chk').forEach(chk => {
+        chk.checked = true;
+        state.catalogSelectedItems.add(chk.getAttribute('data-catalog-chk'));
+      });
+      updateCatalogDeleteBtn();
+    });
+
+    document.getElementById('btnDeselectAllCatalog').addEventListener('click', () => {
+      document.querySelectorAll('.catalog-chk').forEach(chk => {
+        chk.checked = false;
+        state.catalogSelectedItems.delete(chk.getAttribute('data-catalog-chk'));
+      });
+      updateCatalogDeleteBtn();
+    });
+
+    document.getElementById('itemGrid').addEventListener('click', e => {
+      if (e.target.classList.contains('catalog-chk')) {
+        e.stopPropagation();
+        const itemNo = e.target.getAttribute('data-catalog-chk');
+        if (e.target.checked) state.catalogSelectedItems.add(itemNo);
+        else state.catalogSelectedItems.delete(itemNo);
+        updateCatalogDeleteBtn();
+      }
+    });
+
+    async function deleteCatalogItems(itemNos) {
+      if (!itemNos || itemNos.length === 0) return;
+
+      document.getElementById('catalogGridPage').style.display = 'none';
+      document.getElementById('catalogDetailPage').style.display = 'none';
+      document.getElementById('dataTable').innerHTML = '<tbody><tr><td colspan="15" style="text-align:center; padding:50px; font-size: 20px;">Đang xoá dữ liệu trên Cloud...</td></tr></tbody>';
+      document.getElementById('dataSection').style.display = '';
+
+      try {
+        for (let i = 0; i < itemNos.length; i += 100) {
+          const chunk = itemNos.slice(i, i + 100);
+          const { error: err1 } = await supabaseClient.from('raw_data').delete().in('item_no', chunk);
+          if (err1) throw err1;
+
+          const { error: err2 } = await supabaseClient.from('items').delete().in('item_no', chunk);
+          if (err2) throw err2;
+        }
+
+        alert('Đã xoá thành công!');
+        state.catalogSelectedItems.clear();
+        updateCatalogDeleteBtn();
+
+        document.getElementById('dataSection').style.display = 'none';
+        document.getElementById('catalogSection').style.display = '';
+
+        await loadDataFromSupabase();
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi khi xoá: ' + err.message);
+      }
+    }
+
+    document.getElementById('btnDeleteSelectedCatalog').addEventListener('click', () => {
+      confirmAction('Xoá sản phẩm', `Bạn có chắc chắn muốn xoá ${state.catalogSelectedItems.size} sản phẩm này? Mọi dữ liệu thô liên quan sẽ bị xoá vĩnh viễn khỏi Cloud.`, () => {
+        deleteCatalogItems(Array.from(state.catalogSelectedItems));
+      });
+    });
+
+    /* ============ AUTHENTICATION ============ */
+    async function checkSession() {
+      const { data, error } = await supabaseClient.auth.getSession();
+      const isMockLoggedIn = localStorage.getItem('mockupLoggedIn') === 'true';
+
+      if ((data && data.session) || isMockLoggedIn) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('topActions').style.display = 'flex';
+        document.getElementById('topUserEmail').textContent = isMockLoggedIn ? 'sonbn@galaxystudio.vn' : data.session.user.email;
+        await loadDataFromSupabase();
+        showGuideModal(false);
+      } else {
+        document.getElementById('loginOverlay').style.display = 'flex';
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value;
+      const pass = document.getElementById('loginPass').value;
+      const btn = document.getElementById('btnLogin');
+      const err = document.getElementById('loginError');
+
+      if (!email || !pass) return;
+
+      btn.textContent = 'Đang đăng nhập...';
+      btn.disabled = true;
+      err.style.display = 'none';
+
+      if ((email === 'sonbn@galaxystudio.vn' && pass === '12345678') || (email === 'demo@galaxystudio.vn' && pass === '123456')) {
+        // Hardcoded mockup bypass
+        btn.textContent = 'Đăng nhập';
+        btn.disabled = false;
+        localStorage.setItem('mockupLoggedIn', 'true');
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('topActions').style.display = 'flex';
+        document.getElementById('topUserEmail').textContent = email;
+        await loadDataFromSupabase();
+        showGuideModal(false);
+        return;
+      }
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: pass
+      });
+
+      btn.textContent = 'Đăng nhập';
+      btn.disabled = false;
+
+      if (error) {
+        err.textContent = 'Sai tài khoản hoặc mật khẩu!';
+        err.style.display = 'block';
+      } else {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('topActions').style.display = 'flex';
+        document.getElementById('topUserEmail').textContent = data.user ? data.user.email : '';
+        await loadDataFromSupabase();
+        showGuideModal(false);
+      }
+    }
+
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
+      localStorage.removeItem('mockupLoggedIn');
+      document.getElementById('loginOverlay').style.display = 'flex';
+      document.getElementById('topActions').style.display = 'none';
+      // Clear data
+      RAW_ROWS = [];
+      DATA = deriveCatalog(RAW_ROWS);
+      renderAll();
+      renderDataTable();
+    }
+
+    /* ============ GUIDE MODAL ============ */
+    function showGuideModal(force = false) {
+      if (!force && localStorage.getItem('hideGuide') === 'true') {
+        return;
+      }
+      const chk = document.getElementById('chkHideGuide');
+      if (chk) chk.checked = localStorage.getItem('hideGuide') === 'true';
+      document.getElementById('guideOverlay').style.display = 'flex';
+    }
+
+    function closeGuideModal() {
+      const chk = document.getElementById('chkHideGuide');
+      if (chk) {
+        localStorage.setItem('hideGuide', chk.checked ? 'true' : 'false');
+      }
+      document.getElementById('guideOverlay').style.display = 'none';
+    }
+
+    /* ============ DATA GUIDE MODAL ============ */
+    function showDataGuideModal(force = false) {
+      if (!force && localStorage.getItem('hideDataGuide') === 'true') {
+        return;
+      }
+      const chk = document.getElementById('chkHideDataGuide');
+      if (chk) chk.checked = localStorage.getItem('hideDataGuide') === 'true';
+      document.getElementById('dataGuideOverlay').style.display = 'flex';
+    }
+
+    function closeDataGuideModal() {
+      const chk = document.getElementById('chkHideDataGuide');
+      if (chk) {
+        localStorage.setItem('hideDataGuide', chk.checked ? 'true' : 'false');
+      }
+      document.getElementById('dataGuideOverlay').style.display = 'none';
+    }
+
+    /* ============ INIT ============ */
+    DATA = deriveCatalog(RAW_ROWS);
+    pushVersion();
+    pushImageVersion();
+    renderLocationSelect();
+    renderNavFoot();
+    // --- DRAWER LOGIC ---
+    let editingDrawerRid = null;
+    let tempDrawerImageObj = null;
+    
+    function openDrawer(rid = null) {
+      editingDrawerRid = rid;
+      tempDrawerImageObj = null;
+      
+      if (rid) {
+        const rowData = state.dataDraft.find(r => r.rid === rid);
+        if (rowData && rowData.itemNo && ITEM_IMAGES[rowData.itemNo]) {
+          tempDrawerImageObj = Object.assign({}, ITEM_IMAGES[rowData.itemNo]);
+        }
+      }
+
+      document.getElementById('drawerTitle').textContent = rid ? 'Chỉnh sửa dữ liệu' : 'Thêm dòng dữ liệu mới';
+      document.getElementById('btnSaveDrawer').textContent = rid ? 'Lưu thay đổi' : 'Thêm dòng';
+      
+      generateDrawerForm();
+      
+      document.getElementById('drawerOverlay').classList.add('active');
+      document.getElementById('addRowDrawer').classList.add('active');
+    }
+    
+    function closeDrawer() {
+      document.getElementById('drawerOverlay').classList.remove('active');
+      document.getElementById('addRowDrawer').classList.remove('active');
+    }
+    
+    function generateDrawerForm() {
+      const formContainer = document.getElementById('drawerForm');
+      formContainer.innerHTML = '';
+      
+      let rowData = null;
+      if (editingDrawerRid) {
+        rowData = state.dataDraft.find(r => r.rid === editingDrawerRid);
+      }
+
+      // Add Image Upload
+      const imgHtml = tempDrawerImageObj ? `<img src="${tempDrawerImageObj.dataUrl}">` : `<div class="glyph">🖼</div><span>Tải ảnh lên</span>`;
+      
+      const imgDiv = document.createElement('div');
+      imgDiv.className = 'drawer-form-group';
+      imgDiv.style.alignItems = 'center';
+      imgDiv.innerHTML = `
+        <label class="item-img-uploader" for="drawerImgUpload" style="margin: 0 auto 16px;">
+          ${imgHtml}
+          <input type="file" id="drawerImgUpload" accept="image/*" style="display:none;">
+        </label>
+      `;
+      formContainer.appendChild(imgDiv);
+
+      // Bind image upload event
+      setTimeout(() => {
+        const fileInput = document.getElementById(`drawerImgUpload`);
+        if(fileInput) {
+          fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+              tempDrawerImageObj = {
+                dataUrl: evt.target.result,
+                storedName: `IMG_TEMP_${Date.now()}.jpg`,
+                originalName: file.name,
+                uploadedAt: new Date().toISOString()
+              };
+              // Cập nhật lại form để hiện ảnh mới
+              generateDrawerForm();
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+      }, 10);
+      
+      DATA_FIELDS.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'drawer-form-group';
+        
+        const label = document.createElement('label');
+        label.textContent = f.label;
+        if (f.key === 'itemNo' || f.key === 'vendorCode' || f.key === 'locCode') {
+          label.innerHTML += ' <span style="color:red">*</span>';
+        }
+        div.appendChild(label);
+        
+        const currentVal = rowData ? rowData[f.key] : null;
+
+        if (f.type === 'select') {
+          const select = document.createElement('select');
+          select.id = 'drawer_' + f.key;
+          let opts = f.options.slice();
+          if (currentVal && !opts.includes(currentVal)) opts = [currentVal, ...opts];
+          select.innerHTML = '<option value="">-- Chọn --</option>' + opts.map(o => `<option value="${o}">${o}</option>`).join('');
+          
+          if (currentVal !== null && currentVal !== undefined) {
+            select.value = currentVal;
+          } else if (state.dataFilters[f.key]) {
+            select.value = state.dataFilters[f.key]; // Smart default
+          }
+          div.appendChild(select);
+        } else if (f.type === 'number') {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.id = 'drawer_' + f.key;
+          if (currentVal !== null && currentVal !== undefined) {
+            input.value = currentVal;
+          } else if (state.dataFilters[f.key]) {
+            input.value = state.dataFilters[f.key];
+          }
+          div.appendChild(input);
+        } else {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = 'drawer_' + f.key;
+          if (currentVal !== null && currentVal !== undefined) {
+            input.value = currentVal;
+          } else if (state.dataFilters[f.key]) {
+            input.value = state.dataFilters[f.key];
+          }
+          div.appendChild(input);
+        }
+        
+        formContainer.appendChild(div);
+      });
+    }
+    
+    function saveDrawerRow() {
+      // Validate
+      const itemNo = document.getElementById('drawer_itemNo').value;
+      const vendorCode = document.getElementById('drawer_vendorCode').value;
+      const locCode = document.getElementById('drawer_locCode').value;
+      
+      if (!itemNo || !vendorCode || !locCode) {
+        alert('Vui lòng điền đầy đủ Mã Item, Mã NCC và Mã Địa Điểm!');
+        return;
+      }
+      
+      const targetRow = editingDrawerRid ? state.dataDraft.find(r => r.rid === editingDrawerRid) : Object.assign({ rid: 'r' + (seedCounter++) }, blankRow());
+      
+      DATA_FIELDS.forEach(f => {
+        const el = document.getElementById('drawer_' + f.key);
+        if (el) {
+          targetRow[f.key] = f.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value;
+        }
+      });
+      
+      if (!editingDrawerRid) {
+        state.dataDraft.unshift(targetRow);
+        state.dataPage = 1;
+      }
+
+      // Lưu ảnh
+      if (tempDrawerImageObj) {
+        tempDrawerImageObj.storedName = `IMG_${itemNo}_${Date.now()}.jpg`;
+        ITEM_IMAGES[itemNo] = tempDrawerImageObj;
+      }
+      
+      renderDataTable();
+      closeDrawer();
+    }
+    
+    document.getElementById('btnEditSelected').onclick = () => {
+      if (state.dataSelectedRids.size === 1) {
+        const rid = Array.from(state.dataSelectedRids)[0];
+        openDrawer(rid);
+      }
+    };
+    
+    document.getElementById('drawerClose').onclick = closeDrawer;
+    document.getElementById('drawerOverlay').onclick = closeDrawer;
+    document.getElementById('btnCancelDrawer').onclick = closeDrawer;
+    document.getElementById('btnSaveDrawer').onclick = saveDrawerRow;
+    // Override old btnAddRow
+    document.getElementById('btnAddRow').onclick = () => openDrawer(null);
+
+    // --- ADD N ROWS MODAL LOGIC ---
+    function openAddNRowsModal() {
+      document.getElementById('fNRows').value = 10;
+      document.getElementById('addNRowsModalBackdrop').classList.add('show');
+      document.getElementById('fNRows').focus();
+    }
+    function closeAddNRowsModal() {
+      document.getElementById('addNRowsModalBackdrop').classList.remove('show');
+    }
+    function submitAddNRows() {
+      const val = parseInt(document.getElementById('fNRows').value);
+      if (isNaN(val) || val < 1 || val > 1000) {
+        alert('Vui lòng nhập số lượng hợp lệ (1 - 1000)');
+        return;
+      }
+      closeAddNRowsModal();
+      addDataRows(val);
+    }
+    
+    document.getElementById('addNRowsModalClose').onclick = closeAddNRowsModal;
+    document.getElementById('addNRowsCancel').onclick = closeAddNRowsModal;
+    document.getElementById('addNRowsSubmitBtn').onclick = submitAddNRows;
+    document.getElementById('addNRowsForm').addEventListener('submit', e => { e.preventDefault(); submitAddNRows(); });
+    
+    // --- GEMINI API KEY LOGIC ---
+    function openGeminiKeyModal() {
+      const key = localStorage.getItem('ai_gemini_key') || '';
+      document.getElementById('fGeminiKey').value = key;
+      document.getElementById('geminiKeyModalBackdrop').classList.add('show');
+    }
+    function closeGeminiKeyModal() {
+      document.getElementById('geminiKeyModalBackdrop').classList.remove('show');
+    }
+    document.getElementById('geminiKeyModalClose').onclick = closeGeminiKeyModal;
+    document.getElementById('geminiKeyCancel').onclick = closeGeminiKeyModal;
+    document.getElementById('geminiKeySubmitBtn').onclick = () => {
+      const key = document.getElementById('fGeminiKey').value.trim();
+      localStorage.setItem('ai_gemini_key', key);
+      closeGeminiKeyModal();
+      alert('Đã lưu mã API Key thành công!');
+    };
+
+    // --- AI IMPORT LOGIC ---
+    document.getElementById('aiImportSubmitBtn').onclick = async () => {
+      const key = localStorage.getItem('ai_gemini_key');
+      if (!key) {
+        alert('Vui lòng thiết lập Gemini API Key trước khi sử dụng tính năng này!');
+        openGeminiKeyModal();
+        return;
+      }
+      const fileInput = document.getElementById('fAiImport');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Vui lòng chọn một tệp tài liệu để AI phân tích!');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const loadingEl = document.getElementById('aiImportLoading');
+      const submitBtn = document.getElementById('aiImportSubmitBtn');
+      
+      loadingEl.style.display = 'block';
+      submitBtn.disabled = true;
+
+      try {
+        let fileMimeType = file.type;
+        let inlineData = null;
+        let textContent = null;
+        
+        // 1. Process File Content based on type
+        if (file.name.toLowerCase().endsWith('.csv') || fileMimeType === 'text/csv' || fileMimeType === 'text/plain') {
+            textContent = await file.text();
+        } 
+        else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: 'array' });
+            textContent = '';
+            for (let i = 0; i < workbook.SheetNames.length; i++) {
+                const sheet = workbook.Sheets[workbook.SheetNames[i]];
+                textContent += XLSX.utils.sheet_to_csv(sheet) + "\\n\\n";
+            }
+        }
+        else { // Images, PDFs
+            if(!fileMimeType && file.name.toLowerCase().endsWith('.pdf')) fileMimeType = 'application/pdf';
+            if(!fileMimeType) fileMimeType = 'image/jpeg';
+            
+            const base64Str = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
+            inlineData = {
+                mimeType: fileMimeType,
+                data: base64Str
+            };
+        }
+
+        // 2. Prepare Prompt
+        const promptText = `
+Bạn là một trợ lý ảo thông minh chuyên trích xuất dữ liệu hàng hóa, danh mục sản phẩm từ tài liệu.
+Hãy trích xuất danh sách sản phẩm từ tài liệu người dùng cung cấp.
+Nếu dữ liệu có nhiều dòng sản phẩm, hãy trả về toàn bộ các dòng đó.
+Hãy trả về DUY NHẤT một mảng JSON theo định dạng sau (không giải thích thêm, không chứa markdown \`\`\`json):
+[
+  {
+    "itemNo": "Mã sản phẩm (nếu không có thì tự tạo mã ngẫu nhiên ví dụ SP-001)",
+    "vendorCode": "Mã NCC (ví dụ VD0008851, nếu không rõ để trống)",
+    "vendorName": "Tên Công Ty/Tên Nhà Cung Cấp",
+    "locCode": "Mã Địa Điểm (VD: BMT-CO, DN-CO...)",
+    "category": "Phân loại (Food hoặc Drink hoặc Concession)",
+    "barcode": "Mã vạch",
+    "desc": "Tên hàng hóa / Tên sản phẩm",
+    "moq": "Số lượng MOQ (nếu có, trả về số)",
+    "mov": "Số lượng MOV (nếu có, trả về số)",
+    "purchUnit": "Đơn vị mua (VD: Thùng, Lốc)",
+    "baseUnit": "Đơn vị cơ sở (VD: Chai, Gói, Ly)"
+  }
+]
+`;
+
+        let contents = [];
+        if (textContent) {
+            contents.push({ role: "user", parts: [{ text: promptText + "\\n\\nNội dung tài liệu:\\n" + textContent }] });
+        } else if (inlineData) {
+            contents.push({ role: "user", parts: [{ text: promptText }, { inline_data: inlineData }] });
+        }
+
+        // 3. Fetch Gemini API with Fallback Logic
+        const modelsToTry = [
+            'gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-flash-8b',
+            'gemini-1.5-pro-latest', 'gemini-1.5-pro', 
+            'gemini-2.0-flash-exp', 'gemini-2.0-pro-exp', 
+            'gemini-2.5-flash', 'gemini-2.5-pro',
+            'gemini-3.0-flash', 'gemini-3.0-pro',
+            'gemini-3.5-flash', 'gemini-4.0-flash', 'gemini-4.0-pro',
+            'gemini-pro', 'gemini-1.0-pro'
+        ];
+        let result = null;
+        let lastError = null;
+
+        for (const model of modelsToTry) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: contents })
+                });
+
+                const resJson = await response.json();
+                
+                if (!response.ok) {
+                    const errMsg = resJson.error?.message || "";
+                    const lowerErr = errMsg.toLowerCase();
+                    // Bắt các lỗi do sai API Key, hết tiền, hoặc bị khóa
+                    if (lowerErr.includes("api key") || lowerErr.includes("billing") || lowerErr.includes("quota") || lowerErr.includes("permission") || response.status === 403) {
+                        throw new Error(`Lỗi API Key: ${errMsg}. Vui lòng kiểm tra lại Key hoặc lấy Key mới!`);
+                    }
+                    throw new Error(errMsg || `Lỗi khi gọi mô hình ${model}`);
+                }
+
+                result = resJson;
+                console.log(`Đã gọi thành công mô hình: ${model}`);
+                break; // Thành công thì thoát vòng lặp
+            } catch (err) {
+                lastError = err;
+                console.warn(`Mô hình ${model} thất bại, thử mô hình tiếp theo... Lỗi:`, err.message);
+                if (err.message.includes("Lỗi API Key")) {
+                    break; // Không thử mô hình khác nếu lỗi do Key
+                }
+            }
+        }
+
+        if (!result) {
+            throw new Error(`Đã thử TẤT CẢ các mô hình (đến 4.0) đều thất bại! Vui lòng lấy API Key mới. Lỗi cuối: ${lastError?.message}`);
+        }
+
+        const rawText = result.candidates[0].content.parts[0].text;
+        
+        // Remove markdown formatting if present
+        let jsonStr = rawText.trim();
+        if (jsonStr.startsWith('```json')) jsonStr = jsonStr.substring(7);
+        if (jsonStr.startsWith('```')) jsonStr = jsonStr.substring(3);
+        if (jsonStr.endsWith('```')) jsonStr = jsonStr.substring(0, jsonStr.length - 3);
+        jsonStr = jsonStr.trim();
+
+        const extractedData = JSON.parse(jsonStr);
+
+        if (!Array.isArray(extractedData) || extractedData.length === 0) {
+            throw new Error("Không tìm thấy dữ liệu hoặc định dạng trả về từ AI không hợp lệ!");
+        }
+
+        closeAddNRowsModal();
+        addDataRows(extractedData.length, extractedData);
+        alert(`AI đã trích xuất thành công ${extractedData.length} dòng dữ liệu từ tài liệu! Vui lòng kiểm tra lại trên bảng.`);
+
+      } catch (err) {
+          console.error("Lỗi AI Import:", err);
+          alert("Có lỗi xảy ra trong quá trình AI phân tích tài liệu:\\n" + err.message);
+      } finally {
+          loadingEl.style.display = 'none';
+          submitBtn.disabled = false;
+          fileInput.value = ''; // reset file
+      }
+    };
+
+    // Bind to the new btnAddRowsN button
+    const btnAddRowsN = document.getElementById('btnAddRowsN');
+    if (btnAddRowsN) btnAddRowsN.onclick = openAddNRowsModal;
+
+    setSection('catalog');
+    checkSession();
+  </script>
+</body>
+
+</html>
