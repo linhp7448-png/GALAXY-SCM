@@ -2404,6 +2404,7 @@
               <button class="btn btn-ghost" id="btnAddRowsN" style="display:none;">+ Thêm nhiều dòng</button>
               <button class="btn btn-primary" id="btnEditSelected" style="display:none; background: #c5863d; border: none;">Chỉnh sửa 1 dòng</button>
               <button class="btn btn-danger" id="btnDeleteSelected" style="display:none;">Xoá dòng đã chọn</button>
+              <button class="btn btn-danger" id="btnDeleteAllData" style="display:none; margin-right:5px;">Xoá toàn bộ dữ liệu</button>
               <button class="btn btn-ghost" id="btnCancelEdit" style="display:none;">Huỷ</button>
               <button class="btn btn-primary" id="btnSaveEdit" style="display:none;">Lưu thay đổi</button>
             </div>
@@ -3633,7 +3634,7 @@
       </div>
     </th>`;
       }).join('');
-      const thead = `<thead><tr><th style="min-width:44px;"></th>${headCells}</tr></thead>`;
+      const thead = `<thead><tr><th style="min-width:44px; text-align:center;">${editing ? '<input type="checkbox" id="chkAll" title="Chọn tất cả trang này">' : ''}</th>${headCells}</tr></thead>`;
 
       const bodyRows = pagedRows.map((r, vr) => {
         const cells = DATA_FIELDS.map((f, ci) => {
@@ -3754,6 +3755,14 @@
       } else {
         btnDel.style.display = 'none';
         btnEdit.style.display = 'none';
+      }
+      
+      // Toggle Delete All button visibility
+      const btnDeleteAll = document.getElementById('btnDeleteAllData');
+      if (!state.dataLocked && state.dataDraft.length > 0) {
+        btnDeleteAll.style.display = '';
+      } else {
+        btnDeleteAll.style.display = 'none';
       }
     }
 
@@ -3931,6 +3940,15 @@
       }, 'Xoá', 'btn-danger');
     };
 
+    document.getElementById('btnDeleteAllData').onclick = () => {
+      confirmAction('Xoá TOÀN BỘ dữ liệu?', `Bạn đang chuẩn bị xoá toàn bộ ${state.dataDraft.length} dòng dữ liệu thô! Hành động này sẽ dọn sạch bảng hiện tại. Bạn có chắc chắn không?`, () => {
+        state.dataDraft = [];
+        state.dataSelectedRids.clear();
+        renderDataTable();
+        updateBulkDeleteBtn();
+      }, 'Xoá Sạch', 'btn-danger');
+    };
+
     /* ============ SHARED PASSWORD MODAL (used by both Data tab and Hình ảnh tab) ============ */
     function openPasswordModal(target) {
       state.passwordTarget = target || 'data';
@@ -4025,8 +4043,11 @@
     async function syncDraftToSupabase() {
       document.getElementById('dataTable').innerHTML = '<tbody><tr><td colspan="15" style="text-align:center; padding:50px; font-size: 20px;">Đang đồng bộ dữ liệu lên Đám mây, vui lòng đợi...</td></tr></tbody>';
 
+      // Capture draft in case user clicks Cancel while syncing
+      const draftRows = state.dataDraft || [];
+
       const originalRids = new Set(RAW_ROWS.map(r => r.rid));
-      const currentRids = new Set(state.dataDraft.map(r => r.rid));
+      const currentRids = new Set(draftRows.map(r => r.rid));
       const deletedRids = [...originalRids].filter(id => !currentRids.has(id));
 
       try {
@@ -4044,7 +4065,7 @@
         const rawUpdates = [];
         const rawInserts = [];
 
-        for (const r of state.dataDraft) {
+        for (const r of draftRows) {
           if (!r.itemNo || !r.vendorCode || !r.locCode) continue;
 
           itemsMap.set(r.itemNo, { item_no: r.itemNo, description: r.desc || '', category: r.cat || 'Concession' });
